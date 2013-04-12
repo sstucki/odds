@@ -24,7 +24,7 @@ class CoinModelTest
       }
     }
     show(cond1, "cond1")
-    //assert(cond1.reify === Iterable(1 -> 0.5, 3 -> 0.5))
+    expectResult(Map(1 -> 0.5, 3 -> 0.5))(cond1.reify)
   }
 
   it should "show the results of coinModel1a" in {
@@ -36,7 +36,7 @@ class CoinModelTest
       sum2
     }
     show(coinModel1a, "coinModel1a")
-    //assert(coinModel1a.reify === Iterable(0 -> 0.5, 3 -> 0.5))
+    expectResult(Map(0 -> 0.5, 3 -> 0.5))(coinModel1a.reify)
   }
 
   it should "show the results of coinModel1b" in {
@@ -47,7 +47,7 @@ class CoinModelTest
       sum2
     }
     show(coinModel1b, "coinModel1b")
-    //assert(coinModel1b.reify === Iterable(0 -> 0.5, 3 -> 0.5))
+    expectResult(Map(0 -> 0.5, 3 -> 0.5))(coinModel1b.reify)
   }
 /*
   it should "show the results of coinModel2a" in {
