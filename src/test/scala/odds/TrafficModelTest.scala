@@ -61,7 +61,7 @@ trait TrafficModel extends OddsLang {
 
 trait TrafficModelTest
     extends TrafficModel
-    with OddsCore
+    with OddsExact
     with OddsPrettyPrint
     with FlatSpec {
 

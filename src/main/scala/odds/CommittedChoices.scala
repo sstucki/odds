@@ -11,11 +11,13 @@ trait CommittedChoices {
 
     /** Commit to a given choice of value. */
     protected[this] def commit(v: A) {
+      // FIXME Need synchronization in concurrent contexts...
       choice = Some(v)
     }
 
     /** Renounce the commitment to a specific value. */
     protected[this] def relax {
+      // FIXME Need synchronization in concurrent contexts...
       choice = None
     }
   }

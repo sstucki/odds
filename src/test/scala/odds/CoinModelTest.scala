@@ -4,7 +4,7 @@ import org.scalatest.FlatSpec
 
 class CoinModelTest
     extends OddsLang
-    with OddsCore
+    with OddsExact
     with OddsPrettyPrint
     with FlatSpec {
 
@@ -36,7 +36,7 @@ class CoinModelTest
       sum2
     }
     show(coinModel1a, "coinModel1a")
-    //assert(coinModel1.reify === Iterable(0 -> 0.5, 3 -> 0.5))
+    //assert(coinModel1a.reify === Iterable(0 -> 0.5, 3 -> 0.5))
   }
 
   it should "show the results of coinModel1b" in {
@@ -47,9 +47,9 @@ class CoinModelTest
       sum2
     }
     show(coinModel1b, "coinModel1b")
-    //assert(coinModel1.reify === Iterable(0 -> 0.5, 3 -> 0.5))
+    //assert(coinModel1b.reify === Iterable(0 -> 0.5, 3 -> 0.5))
   }
-
+/*
   it should "show the results of coinModel2a" in {
     val coinModel2a = for {
       coin <- choice(0 -> 0.5, 1 -> 0.5)
@@ -62,7 +62,7 @@ class CoinModelTest
       }
     }
     show(coinModel2a, "coinModel2a")
-    //assert(coinModel2.reify === Iterable(0 -> 0.5, 1 -> 0.25, 2 -> 0.25))
+    //assert(coinModel2a.reify === Iterable(0 -> 0.5, 1 -> 0.25, 2 -> 0.25))
   }
 
   it should "show the results of coinModel2b" in {
@@ -76,6 +76,6 @@ class CoinModelTest
       }
     }
     show(coinModel2b, "coinModel2b")
-    //assert(coinModel2.reify === Iterable(0 -> 0.5, 1 -> 0.25, 2 -> 0.25))
-  }
+    //assert(coinModel2b.reify === Iterable(0 -> 0.5, 1 -> 0.25, 2 -> 0.25))
+  }*/
 }
