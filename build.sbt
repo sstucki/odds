@@ -15,8 +15,8 @@ resolvers ++= Seq(
     "Sonatype Public" at "https://oss.sonatype.org/content/groups/public")
 
 libraryDependencies ++= Seq(
-    "org.scalatest" % "scalatest_2.10.0-RC5" % "2.0.M5-B1" % "test",
-    "EPFL" %% "lms" % "0.3-SNAPSHOT")
+    "org.scalatest" % "scalatest_2.10" % "2.0.M5b" % "test",
+    "EPFL" % "lms_2.10.0" % "0.3-SNAPSHOT")
 
 //--- End of Dependencies
 
