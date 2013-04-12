@@ -40,7 +40,7 @@ trait TrafficModel extends OddsLang {
 
       val d1 = driver1(light)
       val d2 = driver2(otherLight(light))
-      (driver1(light) === always(Drive) && (driver2(otherLight(light)) === always(Drive))) flatMap {
+      (d1 === always(Drive) && (d2 === always(Drive))) flatMap {
         case true =>
           choice(Crash -> 0.9, NoCrash -> 0.1)
         case _ =>
@@ -59,7 +59,7 @@ trait TrafficModel extends OddsLang {
   }
 }
 
-trait TrafficModelTest
+class TrafficModelTest
     extends TrafficModel
     with OddsExact
     with OddsPrettyPrint
@@ -67,23 +67,25 @@ trait TrafficModelTest
 
   behavior of "TrafficModel"
 
-  it should "show the results of trafficModel" in {
-    val trafficModel = crash(cautiousDriver, aggressiveDriver, trafficLight)
-    show(trafficModel, "trafficModel")
+  val trafficModel1 = crash(cautiousDriver, aggressiveDriver, trafficLight)
+  it should "show the results of trafficModel1" in {
+    show(trafficModel1, "trafficModel1")
   }
 
+  val trafficModel2 = crash(aggressiveDriver, aggressiveDriver, trafficLight)
   it should "show the results of trafficModel2" in {
-    val trafficModel2 = crash(aggressiveDriver, aggressiveDriver, trafficLight)
     show(trafficModel2, "trafficModel2")
   }
 
   it should "show the results of trafficModel3" in {
     val trafficModel3 = crash2(cautiousDriver, aggressiveDriver, trafficLight)
     show(trafficModel3, "trafficModel3")
+    expectResult(trafficModel1.reify)(trafficModel3.reify)
   }
 
   it should "show the results of trafficModel4" in {
     val trafficModel4 = crash2(aggressiveDriver, aggressiveDriver, trafficLight)
     show(trafficModel4, "trafficModel4")
+    expectResult(trafficModel2.reify)(trafficModel4.reify)
   }
 }

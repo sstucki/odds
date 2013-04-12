@@ -1,7 +1,10 @@
 package odds
 
 import org.scalatest.FlatSpec
-/*
+
+import scala.language.postfixOps
+
+
 trait CoffeeModel extends OddsLang {
 
   object __match {
@@ -61,7 +64,7 @@ trait CoffeeModel extends OddsLang {
 
 class CoffeeModelTest
     extends CoffeeModel
-    with OddsCore
+    with OddsExact
     with OddsPrettyPrint
     with FlatSpec {
 
@@ -72,6 +75,12 @@ class CoffeeModelTest
       case ShouldGrabCoffee(y) => always(y)
     }).flatMap(x => x)
     show(coffeeModel1, "coffeeModel1")
+    expectResult {
+      Map(
+        "A and D should grab coffee" -> 4.0,
+        "B and D should grab coffee" -> 2.0,
+        "A and E should grab coffee" -> 1.0)
+    } (coffeeModel1.reify)
   }
 }
- */
+

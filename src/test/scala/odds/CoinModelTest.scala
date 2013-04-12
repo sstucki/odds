@@ -49,20 +49,17 @@ class CoinModelTest
     show(coinModel1b, "coinModel1b")
     expectResult(Map(0 -> 0.5, 3 -> 0.5))(coinModel1b.reify)
   }
-/*
+
   it should "show the results of coinModel2a" in {
     val coinModel2a = for {
       coin <- choice(0 -> 0.5, 1 -> 0.5)
     } yield {
       val sum1 = coin + coin
       val sum2 = sum1 + coin
-      (sum2 === always(3)) flatMap {
-        case true => sum1
-        case false => coin
-      }
+      if (sum2 == 3) sum1 else coin
     }
     show(coinModel2a, "coinModel2a")
-    //assert(coinModel2a.reify === Iterable(0 -> 0.5, 1 -> 0.25, 2 -> 0.25))
+    expectResult(Map(0 -> 0.5, 2 -> 0.5))(coinModel2a.reify)
   }
 
   it should "show the results of coinModel2b" in {
@@ -76,6 +73,6 @@ class CoinModelTest
       }
     }
     show(coinModel2b, "coinModel2b")
-    //assert(coinModel2b.reify === Iterable(0 -> 0.5, 1 -> 0.25, 2 -> 0.25))
-  }*/
+    expectResult(Map(0 -> 0.5, 2 -> 0.5))(coinModel2b.reify)
+  }
 }
