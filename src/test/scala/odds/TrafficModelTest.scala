@@ -67,25 +67,25 @@ class TrafficModelTest
 
   behavior of "TrafficModel"
 
-  val trafficModel1 = crash(cautiousDriver, aggressiveDriver, trafficLight)
+  val trafficModel1 = crash(cautiousDriver, aggressiveDriver, trafficLight).reify
   it should "show the results of trafficModel1" in {
     show(trafficModel1, "trafficModel1")
   }
 
-  val trafficModel2 = crash(aggressiveDriver, aggressiveDriver, trafficLight)
+  val trafficModel2 = crash(aggressiveDriver, aggressiveDriver, trafficLight).reify
   it should "show the results of trafficModel2" in {
     show(trafficModel2, "trafficModel2")
   }
 
   it should "show the results of trafficModel3" in {
-    val trafficModel3 = crash2(cautiousDriver, aggressiveDriver, trafficLight)
+    val trafficModel3 = crash2(cautiousDriver, aggressiveDriver, trafficLight).reify
     show(trafficModel3, "trafficModel3")
-    expectResult(trafficModel1.reify)(trafficModel3.reify)
+    expectResult(trafficModel1)(trafficModel3)
   }
 
   it should "show the results of trafficModel4" in {
-    val trafficModel4 = crash2(aggressiveDriver, aggressiveDriver, trafficLight)
+    val trafficModel4 = crash2(aggressiveDriver, aggressiveDriver, trafficLight).reify
     show(trafficModel4, "trafficModel4")
-    expectResult(trafficModel2.reify)(trafficModel4.reify)
+    expectResult(trafficModel2)(trafficModel4)
   }
 }

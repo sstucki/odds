@@ -8,7 +8,7 @@ trait DistIntf {
   this: OddsIntf =>
 
   /** Distribution type. */
-  type Dist[+A] <: Iterable[(A, Prob)]
+  type Dist[+A]
 
   /**
    * We want to be able to view discrete distributions as iterables of

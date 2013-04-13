@@ -2,7 +2,6 @@ package odds
 
 /** ODDS Language interface. */
 trait OddsIntf {
-  this: DistIntf =>
 
   /**
    * Probability weight type.
@@ -20,18 +19,38 @@ trait OddsIntf {
    * @tparam A the type of the support of this random variable.
    */
   trait RandIntf[+A] {
+    this: Rand[A] =>
 
     // What is this?
     var name = super.toString
     override def toString = name
     def dbg(n:String): this.type = { name = n; this }
 
+
+    // -- Observations/conditional probabilities
+
     /**
-     * Reify a random variable representing a probabilistic computation.
+     * Condition this random variable on an observation.
      *
-     * @return the distribution over the values of this random variable.
+     * Use case:
+     *
+     * {{{
+     *     val coin1 = flip(0.5)
+     *     val coin2 = flip(0.5)
+     *     val both  = coin1 && coin2
+     *
+     *     // conditional probability: P(both | coin1) = P(coin2)
+     *     both when coin1
+     * }}}
+     *
+     * @param that the observation (random variable) to condition on.
+     * @returns the conditional probability of `this` given `that`,
+     *          i.e. `P(this | that)`
      */
-    def reify: Dist[A]
+    def when(that: Rand[Boolean]): Rand[A] = that flatMap {
+      case true  => this
+      case false => never
+    }
 
 
     // -- Zero/plus monad API --

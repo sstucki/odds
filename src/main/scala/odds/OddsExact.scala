@@ -1,7 +1,7 @@
 package odds
 
 /** Simple, exact inference for the ODDS language. */
-trait OddsExact extends OddsIntf with DistIterable with CommittedChoices {
+trait OddsExact extends OddsIntf with DistIterables with CommittedChoices {
 
   type Rand[+A] = RandVar[A]
 
@@ -13,6 +13,11 @@ trait OddsExact extends OddsIntf with DistIterable with CommittedChoices {
 
     def reify0[B](p: Prob)(cont: (A, Prob) => Dist[B]): Dist[B]
 
+    /**
+     * Reify a random variable representing a probabilistic computation.
+     *
+     * @return the distribution over the values of this random variable.
+     */
     def reify: Dist[A] = {
       consolidate(reify0(1){ (x, p) => Iterable(x -> p) })
     }

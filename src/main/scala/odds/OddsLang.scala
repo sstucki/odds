@@ -21,20 +21,20 @@ trait OddsLang extends EmbeddedControls with OddsIntf with DistIntf {
 
 /** Functions for pretty printing. */
 trait OddsPrettyPrint {
-  this: OddsIntf =>
+  this: DistIntf =>
 
-  def pp[A](r: Rand[A], strategy: String, solutions: Int) = {
+  def pp[A](dist: Dist[A], strategy: String, solutions: Int) = {
     //val d = if (solutions > 0) r.reify(strategy, solutions) else r.reify
-    val d = r.reify
+    val d = normalize(dist)
     val dSorted = d.toList.sortBy{ case (x, p) => (-p, x.toString) }
     (dSorted map {
       case (x, p) => x + " : " + p
     }).mkString("\n")
   }
 
-  def show[A](r: Rand[A], desc: String = "", strategy: String = "", solutions: Int = -1) = {
+  def show[A](dist: Dist[A], desc: String = "", strategy: String = "", solutions: Int = -1) = {
     println(desc)
-    println(pp(r,strategy,solutions))
+    println(pp(dist, strategy, solutions))
     println("")
   }
 }

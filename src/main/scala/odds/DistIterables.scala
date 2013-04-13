@@ -4,7 +4,7 @@ import scala.language.implicitConversions
 
 
 /** Simple, Iterable-based distributions. */
-trait DistIterable extends DistIntf {
+trait DistIterables extends DistIntf {
   this: OddsIntf =>
 
   /**

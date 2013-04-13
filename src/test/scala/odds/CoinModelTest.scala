@@ -10,7 +10,7 @@ class CoinModelTest
 
   // FIXME: Actually compare against expected results.
 
-  behavior of "OddsLang"
+  behavior of "OddsExact"
 
   it should "show the results of cond1" in {
     val cond1 = {
@@ -22,21 +22,34 @@ class CoinModelTest
           case _ => 3
         }
       }
-    }
+    }.reify
     show(cond1, "cond1")
-    expectResult(Map(1 -> 0.5, 3 -> 0.5))(cond1.reify)
+    expectResult(Map(1 -> 0.5, 3 -> 0.5))(cond1)
+  }
+
+  it should "show the results of cond2" in {
+    val cond2 = {
+      val x = flip(0.5)
+      val y = flip(0.5)
+      val both  = x && y
+
+      // conditional probability: P(both | x) = P(y)
+      both when x
+    }.reify
+    show(cond2, "cond2")
+    expectResult(Map(true -> 0.25, false -> 0.25))(cond2)
   }
 
   it should "show the results of coinModel1a" in {
-    val coinModel1a = for {
+    val coinModel1a = (for {
       coin <- choice(0 -> 0.5, 1 -> 0.5)
     } yield {
       val sum1 = coin + coin
       val sum2 = sum1 + coin
       sum2
-    }
+    }).reify
     show(coinModel1a, "coinModel1a")
-    expectResult(Map(0 -> 0.5, 3 -> 0.5))(coinModel1a.reify)
+    expectResult(Map(0 -> 0.5, 3 -> 0.5))(coinModel1a)
   }
 
   it should "show the results of coinModel1b" in {
@@ -45,21 +58,21 @@ class CoinModelTest
       val sum1 = coin + coin
       val sum2 = sum1 + coin
       sum2
-    }
+    }.reify
     show(coinModel1b, "coinModel1b")
-    expectResult(Map(0 -> 0.5, 3 -> 0.5))(coinModel1b.reify)
+    expectResult(Map(0 -> 0.5, 3 -> 0.5))(coinModel1b)
   }
 
   it should "show the results of coinModel2a" in {
-    val coinModel2a = for {
+    val coinModel2a = (for {
       coin <- choice(0 -> 0.5, 1 -> 0.5)
     } yield {
       val sum1 = coin + coin
       val sum2 = sum1 + coin
       if (sum2 == 3) sum1 else coin
-    }
+    }).reify
     show(coinModel2a, "coinModel2a")
-    expectResult(Map(0 -> 0.5, 2 -> 0.5))(coinModel2a.reify)
+    expectResult(Map(0 -> 0.5, 2 -> 0.5))(coinModel2a)
   }
 
   it should "show the results of coinModel2b" in {
@@ -71,8 +84,8 @@ class CoinModelTest
         case true => sum1
         case false => coin
       }
-    }
+    }.reify
     show(coinModel2b, "coinModel2b")
-    expectResult(Map(0 -> 0.5, 2 -> 0.5))(coinModel2b.reify)
+    expectResult(Map(0 -> 0.5, 2 -> 0.5))(coinModel2b)
   }
 }
