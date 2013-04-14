@@ -1,8 +1,8 @@
 package odds
 
 import org.scalatest.FlatSpec
+import org.scalatest.matchers.ShouldMatchers
 
-/*
 trait AppendModel extends OddsLang {
 
   def randomList(): Rand[List[Boolean]] = flip(0.5).flatMap {
@@ -54,6 +54,14 @@ trait AppendModel extends OddsLang {
     }}}
   }
 
+  def appendModel6 = {
+    // query: X:::Y == t3:::f2 solve for X,Y
+    val x = randomList()
+    val y = randomList()
+    val xy = append(x, x)
+    (x, y) when (xy === always(t3 ::: f2))
+  }
+
 
 
   // now try lists where the tail itself is a random var
@@ -73,7 +81,7 @@ trait AppendModel extends OddsLang {
 
   def randomCList(): Rand[CList[Boolean]] = flip(0.5).flatMap {
     case false => always(CNil)
-    case true  => 
+    case true  =>
       val x = flip(0.5)
       val tail = randomCList()
       x.map(x => CCons(x, tail))
@@ -84,7 +92,7 @@ trait AppendModel extends OddsLang {
     case CCons(h,t) => always(CCons(h, appendC(t,y)))
   }
 
-  def listSameC[T](x: Rand[CList[T]], y: Rand[CList[T]]): Rand[Boolean] = 
+  def listSameC[T](x: Rand[CList[T]], y: Rand[CList[T]]): Rand[Boolean] =
     x.flatMap { u => y.flatMap { v => (u,v) match {
       case (CCons(a,x),CCons(b,y)) if a == b => listSameC(x,y)
       case (CNil,CNil) => always(true)
@@ -104,7 +112,7 @@ trait AppendModel extends OddsLang {
     val x = randomCList()
     val t3f2 = t3++f2
     listSameC(appendC(x,f2c), asCList(t3f2)).flatMap {
-      case true => 
+      case true =>
         // here we rely on memoization: otherwise x.tail would be making new choices all the time,
         asLists(x).map(x=>(x,f2,t3f2))
       case _ => never
@@ -124,44 +132,93 @@ trait AppendModel extends OddsLang {
 }
 
 
-trait AppendModelTest
+class AppendModelTest
     extends AppendModel
-    with OddsCoreLazy
-    with ProbPrettyPrint
-    with FlatSpec {
+    with DepthBoundInference
+    with OddsPrettyPrint
+    with FlatSpec
+    with ShouldMatchers {
 
   behavior of "AppendModel"
 
   it should "show the results of appendModel1" in {
-    show(appendModel1, "appendModel1")
+    val (d, e) = appendModel1.reify(1000)
+    show(d, "appendModel1")
+    d should equal (Map(List(true, true, true, false, false) -> 1.0))
+    e should equal (0)
   }
 
   it should "show the results of appendModel2" in {
-    show(appendModel2, "appendModel2")
+    val (d, e) = appendModel2.reify(1000)
+    show(d, "appendModel2")
+    d should equal (Map(List(false, false, false) -> 0.5, List(true, false, false) -> 0.5))
+    e should equal (0)
   }
 
   it should "show the results of appendModel3" in {
-    show(appendModel3, "appendModel3", "", 5)
+    val (d, e) = appendModel3.reify(5)
+    show(d, "appendModel3")
+    d.size should be >= 5
+    d should contain (t3, 0.5)
+    d foreach {
+      case (l, _) => l.take(3) should equal (t3)
+    }
+    e should be < 0.5
   }
 
   it should "show the results of appendModel4" in {
-    show(appendModel4, "appendModel4", "", 1)
+    val (d, e) = appendModel4.reify(1)
+    show(d, "appendModel4")
+    d.size should be >= 1
+    d foreach {
+      case ((x, y, res), _) =>
+        y should equal (f2)
+        (x ::: y) should equal (res)
+        res should equal (t3 ::: f2)
+    }
+    e should be < 0.5
   }
 
   it should "show the results of appendModel5" in {
-    show(appendModel5, "appendModel5", "", 5)
+    val (d, e) = appendModel5.reify(5)
+    show(d, "appendModel5")
+    d.size should be >= 5
+    d foreach {
+      case ((x, y), _) =>
+        (x ::: y) should equal (t3 ::: f2)
+    }
+    e should be < 0.5
+  }
+
+  it should "show the results of appendModel6" in {
+    val (d, e) = appendModel6.reify(5)
+    show(d, "appendModel6")
+    d.size should be >= 5
+    d foreach {
+      case ((x, y), _) =>
+        (x ::: y) should equal (t3 ::: f2)
+    }
+    e should be < 0.5
   }
 
   it should "show the results of appendModel3b" in {
-    show(appendModel3b, "appendModel3b", "", 5)
+    val (d, e) = appendModel3b.reify(5)
+    show(d, "appendModel3b")
+    d should equal (Map())
+    e should equal (0)
   }
-
+/*
   it should "show the results of appendModel4b" in {
-    show(appendModel4b, "appendModel4b", "", 1)
+    val (d, e) = appendModel4b.reify(1)
+    show(d, "appendModel4b")
+    d should equal (Map())
+    e should equal (0)
   }
 
   it should "show the results of appendModel5b" in {
-    show(appendModel5b, "appendModel5b", "", 5)
-  }
+    val (d, e) = appendModel5b.reify(5)
+    show(d, "appendModel5b")
+    d should equal (Map())
+    e should equal (0)
+  }*/
 }
-*/

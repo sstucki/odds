@@ -4,7 +4,7 @@ import org.scalatest.FlatSpec
 
 class CoinModelTest
     extends OddsLang
-    with OddsExact
+    with ExactInference
     with OddsPrettyPrint
     with FlatSpec {
 
@@ -38,6 +38,18 @@ class CoinModelTest
     }.reify
     show(cond2, "cond2")
     expectResult(Map(true -> 0.25, false -> 0.25))(cond2)
+  }
+
+  it should "show the results of cond3" in {
+    val cond3 = {
+      val x = flip(0.25)
+      x flatMap {
+        case true  => always(1)
+        case false => uniform(2, 3, 4)
+      }
+    }.reify
+    show(cond3, "cond3")
+    expectResult(Map(1 -> 0.25, 2 -> 0.25, 3 -> 0.25, 4 -> 0.25))(cond3)
   }
 
   it should "show the results of coinModel1a" in {
@@ -87,5 +99,28 @@ class CoinModelTest
     }.reify
     show(coinModel2b, "coinModel2b")
     expectResult(Map(0 -> 0.5, 2 -> 0.5))(coinModel2b)
+  }
+
+  it should "show the results of coinModel3a" in {
+    val coinModel3a = {
+      def regularCoin = flip(0.5)
+      val c = regularCoin
+      for (c1 <- c; c2 <- c) yield (c1, c2)
+    }.reify
+    show(coinModel3a, "coinModel3a")
+    expectResult(Map((true, true) -> 0.5, (false, false) -> 0.5))(coinModel3a)
+  }
+
+  it should "show the results of coinModel3b" in {
+    val coinModel3b = {
+      def magicCoin = always(true).flatMap {
+        case true => flip(0.5)
+        case _    => never
+      }
+      val c = magicCoin
+      for (c1 <- c; c2 <- c) yield (c1, c2)
+    }.reify
+    show(coinModel3b, "coinModel3b")
+    expectResult(Map((true, true) -> 0.5, (false, false) -> 0.5))(coinModel3b)
   }
 }

@@ -64,7 +64,7 @@ trait CoffeeModel extends OddsLang {
 
 class CoffeeModelTest
     extends CoffeeModel
-    with OddsExact
+    with ExactInference
     with OddsPrettyPrint
     with FlatSpec {
 
@@ -77,9 +77,9 @@ class CoffeeModelTest
     show(coffeeModel1, "coffeeModel1")
     expectResult {
       Map(
-        "A and D should grab coffee" -> 4.0,
-        "B and D should grab coffee" -> 2.0,
-        "A and E should grab coffee" -> 1.0)
+        "A and D should grab coffee" -> 0.8,
+        "B and D should grab coffee" -> 0.4,
+        "A and E should grab coffee" -> 0.2)
     } (coffeeModel1)
   }
 }

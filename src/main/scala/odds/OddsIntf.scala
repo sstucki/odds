@@ -78,7 +78,8 @@ trait OddsIntf {
   def always[A](x: A) = choice(x -> 1.0)
   def never = choice()
   def flip(p: Double): Rand[Boolean] = choice(true -> p, false -> (1-p))
-  def uniform[A](xs: A*): Rand[A] = choice(xs.map((_, 1.0)):_*)
-
-  //def collapse2[A](r: Rand[A], strategy: String, solutions: Int): List[(A,Prob)]
+  def uniform[A](xs: A*): Rand[A] = if (xs.isEmpty) never else {
+    val p = 1.0 / xs.size
+    choice(xs.map((_, p)):_*)
+  }
 }

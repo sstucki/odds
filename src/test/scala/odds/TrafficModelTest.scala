@@ -61,7 +61,7 @@ trait TrafficModel extends OddsLang {
 
 class TrafficModelTest
     extends TrafficModel
-    with OddsExact
+    with ExactInference
     with OddsPrettyPrint
     with FlatSpec {
 

@@ -1,11 +1,11 @@
 package odds
 
 /** Simple, exact inference for the ODDS language. */
-trait OddsExact extends OddsIntf with DistIterables with CommittedChoices {
+trait ExactInference extends OddsIntf with DistIterables with CommittedChoices {
 
   type Rand[+A] = RandVar[A]
 
-  abstract class RandVar[+A] extends RandIntf[A] {
+  sealed abstract class RandVar[+A] extends RandIntf[A] {
 
     def flatMap[B](f: A => Rand[B]): Rand[B] = RandVarFlatMap(this, f)
 
@@ -34,7 +34,8 @@ trait OddsExact extends OddsIntf with DistIterables with CommittedChoices {
           cont(v, p)
         }
         case None => {
-          val d = dist flatMap { case (v, q) =>
+          val d = dist flatMap {
+            case (v, q) =>
               commit(v)
               cont(v, p * q)
           }
