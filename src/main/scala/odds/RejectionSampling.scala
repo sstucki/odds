@@ -3,7 +3,7 @@ package odds
 import scala.collection.mutable
 
 /** Simple, rejection sampler for the ODDS language. */
-trait OddsReject extends OddsIntf with DistIterables {
+trait RejectionSampling extends OddsIntf with DistIterables {
 
   val prng = new java.util.Random
 
@@ -34,7 +34,7 @@ trait OddsReject extends OddsIntf with DistIterables {
   def sample[A](samples: Int)(x: => Rand[A]): Dist[A] = {
     val distMap = new mutable.HashMap[A, Prob]()
     for (_ <- 1 to samples; v <- x.v) {
-      distMap(v) = distMap(v) + 1
+      distMap(v) = distMap.getOrElse(v, 0.0) + 1.0
     }
     distMap
   }

@@ -8,9 +8,7 @@ class CoinModelTest
     with OddsPrettyPrint
     with FlatSpec {
 
-  // FIXME: Actually compare against expected results.
-
-  behavior of "OddsExact"
+  behavior of "ExactInference"
 
   it should "show the results of cond1" in {
     val cond1 = {
