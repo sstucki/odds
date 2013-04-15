@@ -46,10 +46,21 @@ trait ExactInference extends OddsIntf with DistIterables with CommittedChoices {
   }
 
   final case class RandVarFlatMap[+A, B](x: RandVar[B], f: B => Rand[A])
-    extends RandVar[A] {
+    extends RandVar[A] with CommittedChoice[Rand[A]] {
 
     def reify0[T](p: Prob)(cont: (A, Prob) => Dist[T]): Dist[T] =
-      x.reify0(p){ (y, q) => f(y).reify0(q)(cont) }
+      x.reify0(p){ (y, q) => //f(y).reify0(q)(cont)
+        choice match {
+          case Some(r) => r.reify0(q)(cont)
+          case None => {
+            val r = f(y)
+            commit(r)
+            val d = r.reify0(q)(cont)
+            relax
+            d
+          }
+        }
+      }
   }
 
   final case class RandVarOrElse[+A](x: RandVar[A], y: RandVar[A])

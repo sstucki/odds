@@ -58,7 +58,7 @@ trait AppendModel extends OddsLang {
     // query: X:::Y == t3:::f2 solve for X,Y
     val x = randomList()
     val y = randomList()
-    val xy = append(x, x)
+    val xy = append(x, y)
     (x, y) when (xy === always(t3 ::: f2))
   }
 
@@ -204,21 +204,35 @@ class AppendModelTest
   it should "show the results of appendModel3b" in {
     val (d, e) = appendModel3b.reify(5)
     show(d, "appendModel3b")
-    d should equal (Map())
-    e should equal (0)
+    d.size should be >= 5
+    d should contain (t3, 0.5)
+    d foreach {
+      case (l, _) => l.take(3) should equal (t3)
+    }
+    e should be < 0.5
   }
-/*
+
   it should "show the results of appendModel4b" in {
     val (d, e) = appendModel4b.reify(1)
     show(d, "appendModel4b")
-    d should equal (Map())
-    e should equal (0)
+    d.size should be >= 1
+    d foreach {
+      case ((x, y, res), _) =>
+        y should equal (f2)
+        (x ::: y) should equal (res)
+        res should equal (t3 ::: f2)
+    }
+    e should be < 0.5
   }
 
   it should "show the results of appendModel5b" in {
     val (d, e) = appendModel5b.reify(5)
     show(d, "appendModel5b")
-    d should equal (Map())
-    e should equal (0)
-  }*/
+    d.size should be >= 5
+    d foreach {
+      case ((x, y), _) =>
+        (x ::: y) should equal (t3 ::: f2)
+    }
+    e should be < 0.5
+  }
 }

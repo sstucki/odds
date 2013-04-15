@@ -47,9 +47,11 @@ trait DepthBoundInference extends OddsIntf with DistIterables with CommittedChoi
       var err: Prob = error + 1
       var depth: Int = 1
       while ((dist.size < solutions) && (err > error)) {
+        //print("depth " + depth + "... ")
         val (dist1, err1) = reify0(1, depth){ (x, p, k) => (Iterable(x -> p), 0.0) }
         dist = dist1
         err = err1
+        //println("err = " + err + ", dist = " + dist)
         depth += 1
       }
       (consolidate(dist), err)
@@ -86,11 +88,22 @@ trait DepthBoundInference extends OddsIntf with DistIterables with CommittedChoi
   }
 
   final case class RandVarFlatMap[+A, B](x: RandVar[B], f: B => Rand[A])
-    extends RandVar[A] {
+    extends RandVar[A] with CommittedChoice[Rand[A]] {
 
     def reify0[T](p: Prob, depth: Int)(
       cont: (A, Prob, Int) => (Dist[T], Prob)): (Dist[T], Prob) =
-      x.reify0(p, depth){ (y, q, k) => f(y).reify0(q, k)(cont) }
+      x.reify0(p, depth){ (y, q, k) =>
+        choice match {
+          case Some(r) => r.reify0(q, k)(cont)
+          case None => {
+            val r = f(y)
+            commit(r)
+            val d = r.reify0(q, k)(cont)
+            relax
+            d
+          }
+        }
+      }
   }
 
   final case class RandVarOrElse[+A](x: RandVar[A], y: RandVar[A])
