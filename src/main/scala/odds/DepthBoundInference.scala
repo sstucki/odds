@@ -7,7 +7,7 @@ package odds
  * depth-first, iterative-deepening traversal of the search tree
  * defined by a probabilistic computation.
  */
-trait DepthBoundInference extends OddsIntf with DistIterables with CommittedChoices {
+trait DepthBoundInference extends OddsIntf with DistIterables {
 
   type Rand[+A] = RandVar[A]
 

@@ -1,7 +1,7 @@
 package odds
 
 /** Simple, exact inference for the ODDS language. */
-trait ExactInference extends OddsIntf with DistIterables with CommittedChoices {
+trait ExactInference extends OddsIntf with DistIterables {
 
   type Rand[+A] = RandVar[A]
 
