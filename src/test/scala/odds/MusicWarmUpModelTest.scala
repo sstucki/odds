@@ -69,14 +69,14 @@ trait MusicWarmUpModel extends OddsLang {
   }
   def lappend[A](xs: Rand[Stream[A]], ys: Rand[Stream[A]]): Rand[Stream[A]] =
     xs flatMap { x =>
-      if (x.isEmpty) nil else
+      if (x.isEmpty) ys else
       lappend(always(x.tail), ys).map(zs => x.head #:: zs)
     }
   val f_ide: PTransform[Note] = x => always(x)
   val f_del: PTransform[Note] = x => nil
   val f_tr1: PTransform[Note] = lmap(transpose1)
   val f_tr5: PTransform[Note] = lmap(transpose5)
-  def transform: PTransform[Note] = x => {
+  val transform: PTransform[Note] = x => {
     if (x.isEmpty) nil else {
       for (
         input <- always(x);
@@ -116,7 +116,7 @@ class MusicWarmUpModelSampleTest
 
   it should "show the results of sampling main" in {
     val r = sample(1000){main}
-    show(r, "main")
+    show(r, "sampled main")
   }
 }
 
@@ -130,6 +130,14 @@ class MusicWarmUpModelExactTest
 
   it should "show the results of exactly inferring main" in {
     val r = normalize(main.reify)
-    show(r, "main")
+    show(r, "exact main")
+    expectResult(Map(
+      G -> 0.002777777777777779,
+      Fsharp -> 0.008333333333333337,
+      F -> 0.008333333333333337,
+      E -> 0.008333333333333337,
+      C -> 0.5,
+      Csharp -> 0.3333333333333333,
+      B -> 0.13888888888888892))(r.toMap)
   }
 }
