@@ -22,7 +22,7 @@ class CoinModelTest
       }
     }.reify
     show(cond1, "cond1")
-    expectResult(Map(1 -> 0.5, 3 -> 0.5))(cond1)
+    assert(Map(1 -> 0.5, 3 -> 0.5) === cond1) // this works now!
   }
 
   it should "show the results of cond2" in {
