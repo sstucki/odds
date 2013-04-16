@@ -23,9 +23,9 @@ trait OddsLang extends EmbeddedControls with OddsIntf with DistIntf {
   def tuple3_get3[T](t: Rand[(_, _, T)]) : Rand[T] = t.map(_._3)
 
   // -- Lifted logic operations/relations --
-  def infix_&&(x: Rand[Boolean], y: Rand[Boolean]): Rand[Boolean] =
+  def infix_&&(x: Rand[Boolean], y: => Rand[Boolean]): Rand[Boolean] =
     x flatMap { c => if (c) y else always(false) }
-  def infix_||(x: Rand[Boolean], y: Rand[Boolean]): Rand[Boolean] =
+  def infix_||(x: Rand[Boolean], y: => Rand[Boolean]): Rand[Boolean] =
     x flatMap { c => if (c) always(true) else y }
   //def __equals[T](x: Rand[T], y: Rand[T]): Rand[Boolean] = // FIXME!
   //  liftOp2(x,y)(_ == _)
