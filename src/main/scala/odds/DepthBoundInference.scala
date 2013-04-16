@@ -9,6 +9,8 @@ package odds
  */
 trait DepthBoundInference extends OddsIntf with DistIterables {
 
+  import CommittedChoice.Environment
+
   type Rand[+A] = RandVar[A]
 
   sealed abstract class RandVar[+A] extends RandIntf[A] {
@@ -17,8 +19,8 @@ trait DepthBoundInference extends OddsIntf with DistIterables {
 
     def orElse[B >: A](that: Rand[B]): Rand[B] = RandVarOrElse(this, that)
 
-    def reify0[B](p: Prob, depth: Int)(
-      cont: (A, Prob, Int) => (Dist[B], Prob)): (Dist[B], Prob)
+    def reify0[B](p: Prob, env: Environment, depth: Int)(
+      cont: (A, Prob, Environment, Int) => (Dist[B], Prob)): (Dist[B], Prob)
 
     /**
      * Reify a random variable representing a probabilistic computation.
@@ -48,7 +50,9 @@ trait DepthBoundInference extends OddsIntf with DistIterables {
       var depth: Int = 1
       while ((dist.size < solutions) && (err > error)) {
         //print("depth " + depth + "... ")
-        val (dist1, err1) = reify0(1, depth){ (x, p, k) => (Iterable(x -> p), 0.0) }
+        val (dist1, err1) = reify0(1, Map(), depth) {
+          (x, p, k, e) => (Iterable(x -> p), 0.0)
+        }
         dist = dist1
         err = err1
         //println("err = " + err + ", dist = " + dist)
@@ -62,11 +66,12 @@ trait DepthBoundInference extends OddsIntf with DistIterables {
       extends RandVar[A]
       with CommittedChoice[A] {
 
-    def reify0[B](p: Prob, depth: Int)(
-      cont: (A, Prob, Int) => (Dist[B], Prob)): (Dist[B], Prob) = choice match {
+    def reify0[B](p: Prob, env: Environment, depth: Int)(
+      cont: (A, Prob, Environment, Int) => (Dist[B], Prob)): (Dist[B], Prob) =
+      choice(env) match {
         case Some(v) => {
           assert(dist exists (_._1 == v), v + " not in " + dist)
-          cont(v, p, depth)
+          cont(v, p, env, depth)
         }
         case None => {
           // Don't count certainties as choices.
@@ -75,10 +80,10 @@ trait DepthBoundInference extends OddsIntf with DistIterables {
           if (depth1 < 0) (Iterable(), p) else {
             val res = dist map {
               case (v, q) =>
-                commit(v)
-                cont(v, p * q, depth1)
+                withChoice(env, v) { e =>
+                  cont(v, p * q, e, depth1)
+                }
             }
-            relax
             res.foldLeft((Iterable[(B, Prob)](), 0.0)){
               case ((dAcc, eAcc), (d, e)) => (dAcc ++ d, eAcc + e)
             }
@@ -90,17 +95,16 @@ trait DepthBoundInference extends OddsIntf with DistIterables {
   final case class RandVarFlatMap[+A, B](x: RandVar[B], f: B => Rand[A])
     extends RandVar[A] with CommittedChoice[Rand[A]] {
 
-    def reify0[T](p: Prob, depth: Int)(
-      cont: (A, Prob, Int) => (Dist[T], Prob)): (Dist[T], Prob) =
-      x.reify0(p, depth){ (y, q, k) =>
-        choice match {
-          case Some(r) => r.reify0(q, k)(cont)
+    def reify0[T](p: Prob, env: Environment, depth: Int)(
+      cont: (A, Prob, Environment, Int) => (Dist[T], Prob)): (Dist[T], Prob) =
+      x.reify0(p, env, depth){ (y, q, e, k) =>
+        choice(env) match {
+          case Some(r) => r.reify0(q, e, k)(cont)
           case None => {
             val r = f(y)
-            commit(r)
-            val d = r.reify0(q, k)(cont)
-            relax
-            d
+            withChoice(e, r) { e1 =>
+              r.reify0(q, e1, k)(cont)
+            }
           }
         }
       }
@@ -109,10 +113,10 @@ trait DepthBoundInference extends OddsIntf with DistIterables {
   final case class RandVarOrElse[+A](x: RandVar[A], y: RandVar[A])
       extends RandVar[A] {
 
-    def reify0[B](p: Prob, depth: Int)(
-      cont: (A, Prob, Int) => (Dist[B], Prob)): (Dist[B], Prob) = {
-      val (xd, xe) = x.reify0(p, depth)(cont)
-      val (yd, ye) = y.reify0(p, depth)(cont)
+    def reify0[B](p: Prob, env: Environment, depth: Int)(
+      cont: (A, Prob, Environment, Int) => (Dist[B], Prob)): (Dist[B], Prob) = {
+      val (xd, xe) = x.reify0(p, env, depth)(cont)
+      val (yd, ye) = y.reify0(p, env, depth)(cont)
       (xd ++ yd, xe + ye)
     }
   }
