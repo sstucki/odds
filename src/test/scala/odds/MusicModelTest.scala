@@ -115,3 +115,17 @@ class MusicModelDepthBoundTest
     show(r, "depth-bound main simple " + p)
   }
 }
+
+class MusicModelLocalImportanceSamplingTest
+    extends MusicModel
+    with LocalImportanceSampling
+    with OddsPrettyPrint
+    with FlatSpec {
+
+  behavior of "MusicModel with local important sampling"
+
+  it should "show the results of local-important sampled main simple" in {
+    val r = sample(100, 2)(main_simple) // TODO(sstucki): going deeper is super slow!
+    show(r, "local-important sampled main simple")
+  }
+}
