@@ -51,7 +51,7 @@ trait DepthBoundInference extends OddsIntf with DistIterables {
       while ((dist.size < solutions) && (err > error)) {
         //print("depth " + depth + "... ")
         val (dist1, err1) = reify0(1, Map(), depth) {
-          (x, p, k, e) => (Iterable(x -> p), 0.0)
+          (x, p, e, k) => (Iterable(x -> p), 0.0)
         }
         dist = dist1
         err = err1
