@@ -22,6 +22,19 @@ trait RejectionSampling extends OddsIntf with DistIterables {
     RandVar(Some(vals(idx)))
   }
 
+  def geometric[A](p: Double): Rand[Int] = {
+    val s = prng.nextDouble
+
+    //here is some imperative code
+    var acc = 0.0
+    var k = 1
+    while (acc < s) {
+      k += 1
+      acc += Math.pow((1-p),(k-1))*p
+    }
+    RandVar(Some(k))
+  }
+
   /**
    * Approximate the distribution defined by a probabilistic
    * computation.

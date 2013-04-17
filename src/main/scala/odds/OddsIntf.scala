@@ -82,4 +82,6 @@ trait OddsIntf {
     val p = 1.0 / xs.size
     choice(xs.map((_, p)):_*)
   }
+
+  def geometric(x: Double): Rand[Int] = ???
 }
