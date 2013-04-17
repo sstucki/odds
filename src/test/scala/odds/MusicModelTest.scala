@@ -2,6 +2,10 @@ package odds
 
 import org.scalatest.FlatSpec
 
+// Translated from
+// http://okmij.org/ftp/kakuritu/index.html#music
+// http://okmij.org/ftp/kakuritu/music2.ml
+
 trait MusicModel extends StreamOddsLang with Notes {
   val octave = List(
     A, Asharp, B, C, Csharp, D, Dsharp, E, F, Fsharp, G, Gsharp,

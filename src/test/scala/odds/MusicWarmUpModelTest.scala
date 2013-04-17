@@ -42,6 +42,10 @@ trait Notes {
   case object Gsharp extends Note
 }
 
+// Translated from
+// http://okmij.org/ftp/kakuritu/index.html#music
+// http://okmij.org/ftp/kakuritu/music1a.ml
+
 trait MusicWarmUpModel extends StreamOddsLang with Notes {
   // Note Transformations
 
