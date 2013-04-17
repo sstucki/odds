@@ -83,7 +83,7 @@ class MusicModelSampleTest
     with OddsPrettyPrint
     with FlatSpec {
 
-  behavior of "MusicWarmUpModel with RejectionSampling"
+  behavior of "MusicModel with RejectionSampling"
 
   def run[A](msg: String, body: => Rand[A], samples: Int) {
     it should "show the results of sampling " + msg + " " + samples in {
