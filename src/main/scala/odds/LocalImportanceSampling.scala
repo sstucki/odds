@@ -69,7 +69,6 @@ trait LocalImportanceSampling extends OddsIntf with DistIterables {
 
     // Keep exploring candidate branches until none remain.
     while (!branches.isEmpty) {
-      println("sol: " + solutions + ", brns: " + branches)
       // Pick a branch at random
       val (bcs, weights) = branches.toArray.unzip
       val dt = DistTree(weights, prng)
@@ -78,7 +77,7 @@ trait LocalImportanceSampling extends OddsIntf with DistIterables {
 
       // Continue exploring the search tree to depth `depth`.
       val (sols, brs) = bc(dt.totalWeight, depth)
-      solutions ++= solutions
+      solutions ++= sols
       branches = brs
     }
     solutions
