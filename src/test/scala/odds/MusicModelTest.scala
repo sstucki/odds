@@ -102,18 +102,16 @@ class MusicModelSampleTest
   run("main", main, 100000)
 }
 
-/* this stack overflows
-class MusicModelExactTest
+class MusicModelDepthBoundTest
     extends MusicModel
-    with ExactInference
+    with DepthBoundInference
     with OddsPrettyPrint
     with FlatSpec {
 
-  behavior of "MusicModel with Exact Inference"
+  behavior of "MusicModel with depth bound Inference"
 
-  it should "show the results of exactly inferring main simple" in {
-    val r = normalize(main_simple.reify)
-    show(r, "exact main simple")
+  it should "show the results of dept-bound inferring main simple" in {
+    val (r, p) = main_simple.reify(10000)
+    show(r, "depth-bound main simple " + p)
   }
 }
-*/
