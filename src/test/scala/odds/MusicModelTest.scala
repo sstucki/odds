@@ -97,3 +97,19 @@ class MusicModelSampleTest
   run("main", main, 10000)
   run("main", main, 100000)
 }
+
+/* this stack overflows
+class MusicModelExactTest
+    extends MusicModel
+    with ExactInference
+    with OddsPrettyPrint
+    with FlatSpec {
+
+  behavior of "MusicModel with Exact Inference"
+
+  it should "show the results of exactly inferring main simple" in {
+    val r = normalize(main_simple.reify)
+    show(r, "exact main simple")
+  }
+}
+*/
