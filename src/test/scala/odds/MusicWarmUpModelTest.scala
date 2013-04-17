@@ -2,7 +2,7 @@ package odds
 
 import org.scalatest.FlatSpec
 
-trait MusicWarmUpModel extends OddsLang {
+trait StreamOddsLang extends OddsLang {
   // Lazy Lists
   def infix_uniformSplit[A](s: Stream[A]): Rand[(Stream[A], Stream[A])] =
     for (i <- uniform(0 to s.length : _*)) yield s.splitAt(i)
@@ -13,8 +13,20 @@ trait MusicWarmUpModel extends OddsLang {
   def infix_length[A](rs: Rand[Stream[A]]): Rand[Int] =
     for (s <- rs) yield s.length
 
-  // Notes and Note Transformations
+  def nil[A]: Rand[Stream[A]] = always(Nil.toStream)
+  type PTransform[A] = Stream[A] => Rand[Stream[A]]
+  def lmap[A](f: A => Rand[A]): PTransform[A] = x => {
+    if (x.isEmpty) nil else
+    lmap(f)(x.tail).flatMap(xs => f(x.head).map(h => h #:: xs))
+  }
+  def lappend[A](xs: Rand[Stream[A]], ys: Rand[Stream[A]]): Rand[Stream[A]] =
+    xs flatMap { x =>
+      if (x.isEmpty) ys else
+      lappend(always(x.tail), ys).map(zs => x.head #:: zs)
+    }
+}
 
+trait Notes {
   sealed abstract class Note
   case object A extends Note
   case object Asharp extends Note
@@ -28,6 +40,10 @@ trait MusicWarmUpModel extends OddsLang {
   case object Fsharp extends Note
   case object G extends Note
   case object Gsharp extends Note
+}
+
+trait MusicWarmUpModel extends StreamOddsLang with Notes {
+  // Note Transformations
 
   // Transpose a note by 1 interval
   def transpose1(n: Note) = n match {
@@ -61,17 +77,6 @@ trait MusicWarmUpModel extends OddsLang {
     case B      => choice(E -> 0.3, F -> 0.3, Fsharp -> 0.3, G -> 0.1)
   }
 
-  type PTransform[A] = Stream[A] => Rand[Stream[A]]
-  def nil[A]: Rand[Stream[A]] = always(Nil.toStream)
-  def lmap[A](f: A => Rand[A]): PTransform[A] = x => {
-    if (x.isEmpty) nil else
-    lmap(f)(x.tail).flatMap(xs => f(x.head).map(h => h #:: xs))
-  }
-  def lappend[A](xs: Rand[Stream[A]], ys: Rand[Stream[A]]): Rand[Stream[A]] =
-    xs flatMap { x =>
-      if (x.isEmpty) ys else
-      lappend(always(x.tail), ys).map(zs => x.head #:: zs)
-    }
   val f_ide: PTransform[Note] = x => always(x)
   val f_del: PTransform[Note] = x => nil
   val f_tr1: PTransform[Note] = lmap(transpose1)
