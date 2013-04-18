@@ -138,7 +138,7 @@ class MusicWarmUpModelExactTest
   behavior of "MusicWarmUpModel with Exact Inference"
 
   it should "show the results of exactly inferring main" in {
-    val r = normalize(main.reify)
+    val r = normalize(reify(main))
     show(r, "exact main")
     expectResult(Map(
       G -> 0.002777777777777779,

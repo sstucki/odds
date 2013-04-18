@@ -29,7 +29,7 @@ class DrunkCoinModelTest
 
   it should "perform exact inference of drunkCoin" in {
     new DrunkCoinModel with ExactInference with OddsPrettyPrint {
-      val d = dcoinAnd(10).reify
+      val d = reify(dcoinAnd(10))
       show(d, "dcointAnd(10), exact")
       d foreach {
         case (false, p) => p should be (0.052631 plusOrMinus 1e-6)
