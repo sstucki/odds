@@ -1,12 +1,14 @@
 package odds
 
 import org.scalatest.FlatSpec
+import org.scalatest.matchers.ShouldMatchers
 
 class CoinModelTest
     extends OddsLang
     with ExactInference
     with OddsPrettyPrint
-    with FlatSpec {
+    with FlatSpec
+    with ShouldMatchers {
 
   behavior of "ExactInference"
 
@@ -121,4 +123,44 @@ class CoinModelTest
     show(coinModel3b, "coinModel3b")
     expectResult(Map((true, true) -> 0.5, (false, false) -> 0.5))(coinModel3b)
   }
+
+  it should "show the results of flipping 20 coins" in {
+
+    // Flip `n` coins.
+    def flips(p: Prob, n: Int): List[Rand[Boolean]] = n match {
+      case 0 => Nil
+      case n => flip(p) :: flips(p, n - 1)
+    }
+
+    // Check whether a list of coins are all `true`.
+    def trues(cs: List[Rand[Boolean]]): Rand[Boolean] = cs match {
+      case Nil     => always(true)
+      case c :: cs => c && trues(cs)
+    }
+
+    val flips20 = reify(trues(flips(0.5, 20)))
+    show(flips20, "20 flips")
+    val exact = 1.0 / (1 << 20)
+    flips20 should equal (Map(true -> exact, false -> (1.0 - exact)))
+
+    // Map for counting actual `&&` events.
+    val events = scala.collection.mutable.HashMap[Boolean, Int]() ++=
+      Map(true -> 0, false -> 0)
+
+    // Check whether a list of coins are all `true` and record events.
+    def truesCount(cs: List[Rand[Boolean]]): Rand[Boolean] = cs match {
+      case Nil     => always(true)
+      case c :: cs => c flatMap { c =>
+        events(c) += 1 // Count event
+        if (c) truesCount(cs) else always(false)
+      }
+    }
+
+    val flips20count = reify(truesCount(flips(0.5, 20)))
+    show(flips20count, "20 flips (when counting events)")
+    println("events: " + events)
+    flips20count should equal (flips20)
+    events should equal (Map(true -> 20, false -> 20))
+  }
+
 }
