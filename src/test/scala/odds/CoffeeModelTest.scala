@@ -71,9 +71,10 @@ class CoffeeModelTest
   behavior of "CoffeeModel"
 
   it should "show the coffeeModel" in {
-    val coffeeModel1: Dist[String] = uniform("A","B","C","D","E").flatMap({
-      case ShouldGrabCoffee(y) => always(y)
-    }).flatMap(x => x).reify
+    val coffeeModel1: Dist[String] = reify(
+      uniform("A","B","C","D","E").flatMap({
+        case ShouldGrabCoffee(y) => always(y)
+      }).flatMap(x => x))
     show(coffeeModel1, "coffeeModel1")
     expectResult {
       Map(
