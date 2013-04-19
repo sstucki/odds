@@ -77,6 +77,27 @@ trait ColoredBallsModel extends OddsLang {
   }
 }
 
+class ColoredBallsPaperTest extends FlatSpec with ShouldMatchers {
+  trait ColoredBalls extends ColoredBallsModel with OddsPrettyPrint {
+    val observations = (1 to 10).map(_ => Blue)
+    def ask1 = model_nballs(observations)
+    def ask2 = model_duplicate(observations)
+  }
+
+  it should "do rejection sampling" in {
+    new ColoredBalls with RejectionSampling {
+      show(normalize(sample(1000)(ask1)), "ask1 (rs)")
+      show(normalize(sample(1000)(ask2)), "ask2 (rs)")
+    }
+  }
+  it should "do local importance sampling" in {
+    new ColoredBalls with LocalImportanceSampling {
+      show(normalize(sample(5000, 3)(ask1)), "ask1 (lis)")
+      show(normalize(sample(20000, 3)(ask2)), "ask2 (lis)")
+    }
+  }
+}
+
 class ColoredBallsModelTest extends FlatSpec with ShouldMatchers {
   behavior of "Colored Balls Model"
 
