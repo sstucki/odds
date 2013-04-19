@@ -75,7 +75,7 @@ trait OddsIntf {
    */
   def choice[A](xs: (A, Prob)*): Rand[A]
 
-  def always[A](x: A) = choice(x -> 1.0)
+  implicit def always[A](x: A) = choice(x -> 1.0)
   def never = choice()
   def flip(p: Double): Rand[Boolean] = choice(true -> p, false -> (1-p))
   def uniform[A](xs: A*): Rand[A] = if (xs.isEmpty) never else {
