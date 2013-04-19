@@ -125,7 +125,12 @@ class MusicModelLocalImportanceSamplingTest
   behavior of "MusicModel with local important sampling"
 
   it should "show the results of local-important sampled main simple" in {
-    val r = sample(100, 2)(main_simple) // TODO(sstucki): going deeper is super slow!
+    val r = sample(70000, 3)(main_simple)
     show(r, "local-important sampled main simple")
+  }
+
+  it should "show the results of local-important sampled main" in {
+    val r = sample(70000, 3, error = 1e-10)(main)
+    show(r, "local-important sampled main")
   }
 }

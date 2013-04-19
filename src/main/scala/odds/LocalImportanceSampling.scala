@@ -42,11 +42,11 @@ trait LocalImportanceSampling extends OddsIntf with DistIterables {
    * @return an approximation of the distribution over the values
    *         of this random variable.
    */
-  def sample[A](samples: Int, depth: Int)(x: Rand[A]): Dist[A] = {
+  def sample[A](samples: Int, depth: Int, error: Prob = 1e-07)(x: Rand[A]): Dist[A] = {
     val distMap = new mutable.HashMap[A, Prob]()
     var count = 0;
     while (count < samples) {
-      for ((v, p) <- sample1(x, depth)) {
+      for ((v, p) <- sample1(x, depth, error)) {
         distMap(v) = distMap.getOrElse(v, 0.0) + p
         count += 1 // FIXME: How to count samples?
       }
@@ -57,7 +57,7 @@ trait LocalImportanceSampling extends OddsIntf with DistIterables {
   abstract class BranchClosure[+A] extends Function2[Prob, Int, ExploreRes[A]]
   type ExploreRes[+A] = (Dist[A], Dist[BranchClosure[A]])
 
-  def sample1[A](x: RandVar[A], depth: Int): Dist[A] = {
+  def sample1[A](x: RandVar[A], depth: Int, error: Prob): Dist[A] = {
 
     val initClos = new BranchClosure[A] {
       def apply(p, d) = explore(x, p, Map(), d) {
@@ -72,6 +72,10 @@ trait LocalImportanceSampling extends OddsIntf with DistIterables {
       // Pick a branch at random
       val (bcs, weights) = branches.toArray.unzip
       val dt = DistTree(weights, prng)
+      if (dt.totalWeight < error) {
+        // We got to stop exploring infinities...
+        return solutions
+      }
       val idx = dt.nextRandom._1
       val bc = bcs(idx)
 
