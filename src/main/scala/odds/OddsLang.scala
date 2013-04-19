@@ -36,9 +36,14 @@ trait OddsLang extends EmbeddedControls with OddsIntf with DistIntf {
   def infix_+(x: Rand[Int], y: Rand[Int]): Rand[Int] = liftOp2(x,y)(_ + _)
   def infix_-(x: Rand[Int], y: Rand[Int]): Rand[Int] = liftOp2(x,y)(_ - _)
 
-  // -- Virtualized control -- // FIXME!
-  //def __ifThenElse[T](cond: Rand[Boolean], tb: => Rand[T], fb: => Rand[T]) =
-  //  cond flatMap { case true => tb; case false => fb }
+  def __ifThenElse[T](cond: Rand[Boolean], tb: => Rand[T], fb: => Rand[T]) =
+    cond flatMap { case true => tb; case false => fb }
+
+  // HACK -- bug in scala-virtualized
+  override def __ifThenElse[T](cond: =>Boolean, thenp: => T, elsep: => T) = cond match {
+    case true => thenp
+    case false => elsep
+  }
 }
 
 
