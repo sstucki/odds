@@ -202,7 +202,7 @@ trait AircraftModel extends OddsLang {
      test the equations of motion.
   */
 
-/*  def blips_ideal(blips: Rand[List[Pos]])(pstates: Rand[List[PlaneState]]) = {
+  def blips_ideal(blips: Rand[List[Pos]])(pstates: Rand[List[PlaneState]]) = {
     val blips_obs: Rand[List[(Pos,Boolean)]] = blips flatMap {poses =>
       liftList(poses map {
         case (x,y) => make_tuple2((make_tuple2((always(x), always(y))),always(false)))
@@ -221,33 +221,22 @@ trait AircraftModel extends OddsLang {
           else always((pos,b))
         }
 
-        val observedTail = observe(plane, xs)
+        val observedTail = observe(plane, always(xs))
         matchedpos.flatMap{
           mpos => observedTail.map{mpos::_}
         }
     }
 
-    true
-/*    val blips_observed = {
-      for(
-        pos <- blips_ops;
-        planes <- pstates;
-        plane <- planes if(plane)
-      )
+    val pstates2 = pstates flatMap{ xs =>
+      xs.foldLeft(blips_obs){
+        case (b_obs, plane) => observe(always(plane), b_obs)
+      }
     }
 
-    val blips_ops_post : List[(Pos, Boolean)] = {
-      for(
-        (pos, flag) <- blips;
-        plane <-pstates if plane.lplane_pos == pos
-      ) yield (pos, true)
-    }.unique
-
-
-    if (blips_ops_post.size != blips_ops.size) never else blips_ops_post
-*/
+    pstates2 flatMap {xs =>
+      if(xs.exists(!_._2)) never else always(xs)
+    }
   }
-  */
 
   // A few commonly-used parameters
   val parm_no = new SysParam{
