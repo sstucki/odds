@@ -62,6 +62,10 @@ trait OddsIntf {
     def orElse[B >: A](that: Rand[B]): Rand[B]
 
     def map[B](f: A => B): Rand[B] = flatMap(x => always(f(x)))
+
+    def foreach(f: A => Unit): Rand[Unit] = map(f)
+
+    def filter(p: A => Boolean): Rand[A] = flatMap(x => if (p(x)) always(x) else never)
   }
 
   /**
