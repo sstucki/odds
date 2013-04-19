@@ -38,13 +38,15 @@ trait ColoredBallsModel extends OddsLang {
   }
 
   // The observation of color is faulty, with 20% error rate
-  def observed_color(c: Color) =
-    if (flip(0.8)) always(c) else always(opposite_color(c))
+  def observed_color(c: Color): Rand[Color] =
+    flip(0.8).map(if (_) c else opposite_color(c))
 
   val nballs_max = 8
 
-  def nballs_prior() = uniform(1 to nballs_max : _*)
-  def ball_colors_prior() = (0 until nballs_max).map(_ => uniform(Blue, Green))
+  def nballs_prior(): Rand[Int] =
+    uniform(1 to nballs_max : _*)
+  def ball_colors_prior(): IndexedSeq[Rand[Color]] =
+    (0 until nballs_max).map(_ => uniform(Blue, Green))
 
   def draw(nballs: Rand[Int], ball_colors: IndexedSeq[Rand[Color]]) = {
     for (n <- nballs;
