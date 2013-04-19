@@ -41,35 +41,34 @@ trait ColoredBallsModel extends OddsLang {
   def observed_color(c: Color) =
     if (flip(0.8)) always(c) else always(opposite_color(c))
 
-  val nballs_max = 9
+  val nballs_max = 8
 
-  def nballs_prior() = uniform(1 to nballs_max-1 : _*)
+  def nballs_prior() = uniform(1 to nballs_max : _*)
+  def ball_colors_prior() = (0 until nballs_max).map(_ => uniform(Blue, Green))
+
+  def draw(nballs: Rand[Int], ball_colors: IndexedSeq[Rand[Color]]) = {
+    for (n <- nballs;
+         b <- uniform(0 until n: _*);
+         c <- ball_colors(b);
+         o <- observed_color(c)) yield (b, c, o)
+  }
 
   def model_nballs(obs: IndexedSeq[Color]) = {
     val nballs = nballs_prior()
-    val ball_colors: IndexedSeq[Rand[Color]] =
-      (1 to nballs_max).map(_ => uniform(Blue, Green))
-    def draw_matches(obs_color: Color) =
-        for (n <- nballs;
-             b <- uniform(1 to n : _*);
-             c <- ball_colors(b);
-             o <- observed_color(c))
-        yield (o == obs_color)
-    nballs when forall(obs, draw_matches)
+    val ball_colors = ball_colors_prior()
+    def matches_draw(obs_color: Color) =
+      for ((_, _, o) <- draw(nballs, ball_colors)) yield o == obs_color
+    nballs when forall(obs, matches_draw)
   }
 
   // was the same ball drawn twice?
   def model_duplicate(obs: IndexedSeq[Color]) = {
     val nballs = nballs_prior()
-    val ball_colors: IndexedSeq[Rand[Color]] =
-      (1 to nballs_max).map(_ => uniform(Blue, Green))
+    val ball_colors = ball_colors_prior()
     val drawn = obs.foldLeft(always(Map.empty[Int, Int])){(map,obs_color) =>
-      for (n <- nballs;
-           b <- uniform(1 to n : _*);
-           c <- ball_colors(b);
-           o <- observed_color(c);
-           m <- map;
-           if (o == obs_color))
+      for ((b, c, o) <- draw(nballs, ball_colors);
+           if o == obs_color;
+           m <- map)
       yield m.updated(b, m.getOrElse(b, 0)+1)
     }
     drawn.map(_.values.min)
@@ -83,14 +82,14 @@ class ColoredBallsModelTest extends FlatSpec with ShouldMatchers {
     new ColoredBallsModel with LocalImportanceSampling with OddsPrettyPrint {
       /// TODO(namin): 5000 should be enough according to Oleg
       ///              we need to duplicate the accuracy
-      val d = sample(5000, 3, error = 1e-10)(model_nballs((1 to 10).map(_ => Blue)))
+      val d = sample(50000, 3, error = 1e-10)(model_nballs((1 to 10).map(_ => Blue)))
       show(normalize(d), "(LIS) Ten balls were drawn, and all appeared blue.")
     }
   }
 
   it should "find the min number of draws of the same ball" in {
     new ColoredBallsModel with LocalImportanceSampling with OddsPrettyPrint {
-      val d = sample(100, 3)(model_duplicate((1 to 10).map(_ => Blue)))
+      val d = sample(20000, 3, error = 1e-10)(model_duplicate((1 to 10).map(_ => Blue)))
       show(normalize(d), "(LIS) Smallest dup distribution.")
     }
   }
