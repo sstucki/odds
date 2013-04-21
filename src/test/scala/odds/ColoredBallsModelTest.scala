@@ -86,8 +86,8 @@ class ColoredBallsPaperTest extends FlatSpec with ShouldMatchers {
 
   it should "do rejection sampling" in {
     new ColoredBalls with RejectionSampling {
-      show(normalize(sample(1000)(ask1)), "ask1 (rs)")
-      show(normalize(sample(1000)(ask2)), "ask2 (rs)")
+      show(normalize(sample(10000)(ask1)), "ask1 (rs)")
+      show(normalize(sample(20000)(ask2)), "ask2 (rs)")
     }
   }
   it should "do local importance sampling" in {
