@@ -9,8 +9,8 @@ import org.scalatest.FlatSpec
 trait MusicModel extends StreamOddsLang with Notes {
   val octave = List(
     A, Asharp, B, C, Csharp, D, Dsharp, E, F, Fsharp, G, Gsharp,
-	  A, Asharp, B, C, Csharp, D, Dsharp, E, F, Fsharp, G, Gsharp,
-	  A, Asharp, B, C, Csharp, D, Dsharp, E, F, Fsharp, G, Gsharp)
+    A, Asharp, B, C, Csharp, D, Dsharp, E, F, Fsharp, G, Gsharp,
+    A, Asharp, B, C, Csharp, D, Dsharp, E, F, Fsharp, G, Gsharp)
 
   def note_to_int(x: Note) = x match {
     case A      => 0
@@ -125,12 +125,12 @@ class MusicModelLocalImportanceSamplingTest
   behavior of "MusicModel with local important sampling"
 
   it should "show the results of local-important sampled main simple" in {
-    val r = sample(70000, 3, error = 1e-10)(main_simple)
+    val r = sample(70, 3, error = 1e-10)(main_simple)
     show(r, "local-important sampled main simple")
   }
 
   it should "show the results of local-important sampled main" in {
-    val r = sample(70000, 3, error = 1e-10)(main)
+    val r = sample(70, 3, error = 1e-10)(main)
     show(r, "local-important sampled main")
   }
 }
