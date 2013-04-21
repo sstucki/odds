@@ -92,7 +92,7 @@ class ColoredBallsPaperTest extends FlatSpec with ShouldMatchers {
   }
   it should "do local importance sampling" in {
     new ColoredBalls with LocalImportanceSampling {
-      show(normalize(sample(5000, 3)(ask1)), "ask1 (lis)")
+      show(normalize(sample(10000, 3)(ask1)), "ask1 (lis)")
       show(normalize(sample(20000, 3)(ask2)), "ask2 (lis)")
     }
   }
@@ -103,16 +103,14 @@ class ColoredBallsModelTest extends FlatSpec with ShouldMatchers {
 
   it should "reproduce the experimental results from Milch et al paper" in {
     new ColoredBallsModel with LocalImportanceSampling with OddsPrettyPrint {
-      /// TODO(namin): 5000 should be enough according to Oleg
-      ///              we need to duplicate the accuracy
-      val d = sample(50000, 3, error = 1e-10)(model_nballs((1 to 10).map(_ => Blue)))
+      val d = sample(10000, 3, error = 0.0)(model_nballs((1 to 10).map(_ => Blue)))
       show(normalize(d), "(LIS) Ten balls were drawn, and all appeared blue.")
     }
   }
 
   it should "find the min number of draws of the same ball" in {
     new ColoredBallsModel with LocalImportanceSampling with OddsPrettyPrint {
-      val d = sample(20000, 3, error = 1e-10)(model_duplicate((1 to 10).map(_ => Blue)))
+      val d = sample(20000, 3, error = 0.0)(model_duplicate((1 to 10).map(_ => Blue)))
       show(normalize(d), "(LIS) Smallest dup distribution.")
     }
   }

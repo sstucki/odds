@@ -42,7 +42,7 @@ trait LocalImportanceSampling extends OddsIntf with DistIterables {
    * @return an approximation of the distribution over the values
    *         of this random variable.
    */
-  def sample[A](samples: Int, depth: Int, error: Prob = 1e-07)(x: Rand[A]): Dist[A] = {
+  def sample[A](samples: Int, depth: Int, error: Prob = 0.0)(x: Rand[A]): Dist[A] = {
     val distMap = new mutable.HashMap[A, Prob]()
     var count = 0;
     while (count < samples) {
