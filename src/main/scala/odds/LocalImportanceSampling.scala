@@ -44,13 +44,16 @@ trait LocalImportanceSampling extends OddsIntf with DistIterables {
    */
   def sample[A](samples: Int, depth: Int, error: Prob = 0.0)(x: Rand[A]): Dist[A] = {
     val distMap = new mutable.HashMap[A, Prob]()
-    var count = 0;
-    while (count < samples) {
+    var solCount = 0;
+    var runCount = 0;
+    while (runCount < samples) {
       for ((v, p) <- sample1(x, depth, error)) {
         distMap(v) = distMap.getOrElse(v, 0.0) + p
-        count += 1 // FIXME: How to count samples?
+        solCount += 1
       }
+      runCount += 1
     }
+    println("importance sampler: " + runCount + " samples, " + solCount + " solutions.")
     distMap
   }
 
@@ -74,6 +77,8 @@ trait LocalImportanceSampling extends OddsIntf with DistIterables {
       val dt = DistTree(weights, prng)
       if (dt.totalWeight < error) {
         // We got to stop exploring infinities...
+        //println("cut off: " + dt.totalWeight + " < " + error + ", " +
+        //  solutions.length + "solutions so far.")
         return solutions
       }
       val idx = dt.nextRandom._1

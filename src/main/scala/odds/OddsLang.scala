@@ -24,17 +24,19 @@ trait OddsLang extends EmbeddedControls with OddsIntf with DistIntf {
 
   // -- Lifted logic operations/relations --
   def infix_&&(x: Rand[Boolean], y: => Rand[Boolean]): Rand[Boolean] =
-    x flatMap { c => if (c) y else always(false) }
+    x flatMap (if (_) y else always(false))
   def infix_||(x: Rand[Boolean], y: => Rand[Boolean]): Rand[Boolean] =
-    x flatMap { c => if (c) always(true) else y }
+    x flatMap (if (_) always(true) else y)
   //def __equals[T](x: Rand[T], y: Rand[T]): Rand[Boolean] = // FIXME!
   //  liftOp2(x,y)(_ == _)
   def infix_===[T](x: Rand[T], y: Rand[T]): Rand[Boolean] =
-    liftOp2(x,y)(_ == _)
+    liftOp2(x, y)(_ == _)
+  def infix_!=[T](x: Rand[T], y: Rand[T]): Rand[Boolean] =
+    liftOp2(x, y)(_ != _)
 
   // -- Lifted arithmetic operations/relations --
-  def infix_+(x: Rand[Int], y: Rand[Int]): Rand[Int] = liftOp2(x,y)(_ + _)
-  def infix_-(x: Rand[Int], y: Rand[Int]): Rand[Int] = liftOp2(x,y)(_ - _)
+  def infix_+(x: Rand[Int], y: Rand[Int]): Rand[Int] = liftOp2(x, y)(_ + _)
+  def infix_-(x: Rand[Int], y: Rand[Int]): Rand[Int] = liftOp2(x, y)(_ - _)
 
   def __ifThenElse[T](cond: Rand[Boolean], tb: => Rand[T], fb: => Rand[T]) =
     cond flatMap { case true => tb; case false => fb }

@@ -5,25 +5,26 @@ import org.scalatest.matchers.ShouldMatchers
 
 trait AppendModel extends OddsLang {
 
-  def randomList(): Rand[List[Boolean]] = flip(0.5).flatMap {
+  def randomList: Rand[List[Boolean]] = flip(0.5) flatMap {
     case false => always(Nil)
-    case true  => {
-      val x = flip(0.5)
-      val tail = randomList()
-      x.flatMap(x => tail.map(xs=>x::xs))
-    }
+    case true  => for {
+      head <- flip(0.5)
+      tail <- randomList
+    } yield head :: tail
   }
 
   def append[T](x: Rand[List[T]], y: Rand[List[T]]): Rand[List[T]] = x flatMap {
     case Nil => y
     case h::tl => append(always(tl),y).map(xs=>h::xs) // full list as input, not very efficient?
   }
+  def infix_++[T](x: Rand[List[T]], y: Rand[List[T]]): Rand[List[T]] =
+    for (xv <- x; yv <- y) yield xv ++ yv
 
   val t3 = List(true, true, true)
   val f2 = List(false, false)
 
   val appendModel1 = {
-    append(always(t3),always(f2))
+    append(always(t3), always(f2))
   }
 
   val appendModel2 = {
@@ -31,12 +32,12 @@ trait AppendModel extends OddsLang {
   }
 
   def appendModel3 = { // needs lazy strategy
-    append(always(t3),randomList())
+    append(always(t3),randomList)
   }
 
   def appendModel4 = {
     // query: X:::f2 == t3:::f2 solve for X
-    randomList().flatMap{ x =>
+    randomList.flatMap{ x =>
       append(always(x),always(f2)).flatMap {
         case res if res == t3:::f2 => always((x,f2,res))
         case _ => never
@@ -46,8 +47,8 @@ trait AppendModel extends OddsLang {
 
   def appendModel5 = {
     // query: X:::Y == t3:::f2 solve for X,Y
-    randomList().flatMap{ x =>
-      randomList().flatMap{ y =>
+    randomList.flatMap{ x =>
+      randomList.flatMap{ y =>
         append(always(x),always(y)).flatMap {
           case res if res == t3:::f2 => always((x,y))
           case _ => never
@@ -56,9 +57,9 @@ trait AppendModel extends OddsLang {
 
   def appendModel6 = {
     // query: X:::Y == t3:::f2 solve for X,Y
-    val x = randomList()
-    val y = randomList()
-    val xy = append(x, y)
+    val x = randomList
+    val y = randomList
+    val xy = x ++ y
     (x, y) when (xy === always(t3 ::: f2))
   }
 
