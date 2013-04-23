@@ -75,7 +75,7 @@ trait LocalImportanceSampling extends OddsIntf with DistIterables {
       // Pick a branch at random
       val (bcs, weights) = branches.toArray.unzip
       val dt = DistTree(weights, prng)
-      if (dt.totalWeight < error) {
+      if ((dt.totalWeight < error) || (dt.totalWeight == 0.0)) {
         // We got to stop exploring infinities...
         //println("cut off: " + dt.totalWeight + " < " + error + ", " +
         //  solutions.length + "solutions so far.")
