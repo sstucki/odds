@@ -16,6 +16,9 @@ trait DistIntf {
    */
   implicit def distToIterable[A](d: Dist[A]): Iterable[(A, Prob)]
 
+  /** Build a distribution from a sequence of value-weight pairs. */
+  def dist[A](xs: (A, Prob)*): Dist[A]
+
   /** Scale the weights of a distribution by a given value. */
   def scale[A](w: Prob, xs: Dist[A]): Dist[A]
 
