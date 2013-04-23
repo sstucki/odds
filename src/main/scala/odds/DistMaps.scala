@@ -152,8 +152,6 @@ trait DistMaps extends DistIntf {
       }
   }
 
-  implicit def distToIterable[A](d: Dist[A]): Iterable[(A, Prob)] = d
-
   def dist[A](xs: (A, Prob)*): Dist[A] = DistMap(xs: _*)
 
   def scale[A](w: Prob, xs: Dist[A]): Dist[A] = xs.scale(w)

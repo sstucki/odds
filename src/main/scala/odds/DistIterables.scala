@@ -14,8 +14,6 @@ trait DistIterables extends DistIntf {
    */
   type Dist[+A] = Iterable[(A, Prob)]
 
-  implicit def distToIterable[A](d: Dist[A]): Iterable[(A, Prob)] = d
-
   /** Build a distribution from a sequence of value-weight pairs. */
   def dist[A](xs: (A, Prob)*): Dist[A] = Iterable(xs: _*)
 
