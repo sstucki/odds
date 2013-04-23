@@ -1,6 +1,7 @@
 package odds
 
 import org.scalatest.FlatSpec
+import org.scalatest.matchers.ShouldMatchers
 
 trait CListOddsLang extends OddsLang {
   // A list where the tail itself is a random var.
@@ -141,21 +142,24 @@ class CMusicWarmUpModelExactTest
     extends CMusicWarmUpModel
     with ExactInference
     with OddsPrettyPrint
-    with FlatSpec {
+    with FlatSpec
+    with ShouldMatchers {
 
   behavior of "CMusicWarmUpModel with Exact Inference"
 
   it should "show the results of exactly inferring main" in {
     val r = normalize(reify(main))
     show(r, "exact main")
-    expectResult(Map(
-      G -> 0.002777777777777779,
-      Fsharp -> 0.008333333333333337,
-      F -> 0.008333333333333337,
-      E -> 0.008333333333333337,
-      C -> 0.5,
-      Csharp -> 0.3333333333333333,
-      B -> 0.13888888888888892))(r.toMap)
+    r.toMap foreach {
+      case (G, p)      => p should be (0.002777777 plusOrMinus 1e-9)
+      case (Fsharp, p) => p should be (0.008333333 plusOrMinus 1e-9)
+      case (F, p)      => p should be (0.008333333 plusOrMinus 1e-9)
+      case (E, p)      => p should be (0.008333333 plusOrMinus 1e-9)
+      case (C, p)      => p should be (0.5         plusOrMinus 1e-9)
+      case (Csharp, p) => p should be (0.333333333 plusOrMinus 1e-9)
+      case (B, p)      => p should be (0.138888888 plusOrMinus 1e-9)
+      case x => throw new Exception("unexpected note: " + x)
+    }
   }
 }
 

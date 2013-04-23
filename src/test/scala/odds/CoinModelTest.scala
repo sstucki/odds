@@ -24,7 +24,7 @@ class CoinModelTest
       }
     }
     show(cond1, "cond1")
-    assert(Map(1 -> 0.5, 3 -> 0.5) === cond1) // this works now!
+    cond1.toMap should equal (Map(1 -> 0.5, 3 -> 0.5))
   }
 
   it should "show the results of cond2" in {
@@ -37,7 +37,7 @@ class CoinModelTest
       both when x
     }
     show(cond2, "cond2")
-    expectResult(Map(true -> 0.25, false -> 0.25))(cond2)
+    cond2.toMap should equal (Map(true -> 0.25, false -> 0.25))
   }
 
   it should "show the results of cond3" in {
@@ -49,7 +49,7 @@ class CoinModelTest
       }
     }
     show(cond3, "cond3")
-    expectResult(Map(1 -> 0.25, 2 -> 0.25, 3 -> 0.25, 4 -> 0.25))(cond3)
+    cond3.toMap should equal (Map(1 -> 0.25, 2 -> 0.25, 3 -> 0.25, 4 -> 0.25))
   }
 
   it should "show the results of coinModel1a" in {
@@ -61,7 +61,7 @@ class CoinModelTest
       sum2
     })
     show(coinModel1a, "coinModel1a")
-    expectResult(Map(0 -> 0.5, 3 -> 0.5))(coinModel1a)
+    coinModel1a.toMap should equal (Map(0 -> 0.5, 3 -> 0.5))
   }
 
   it should "show the results of coinModel1b" in {
@@ -72,7 +72,7 @@ class CoinModelTest
       sum2
     }
     show(coinModel1b, "coinModel1b")
-    expectResult(Map(0 -> 0.5, 3 -> 0.5))(coinModel1b)
+    coinModel1b.toMap should equal (Map(0 -> 0.5, 3 -> 0.5))
   }
 
   it should "show the results of coinModel2a" in {
@@ -84,7 +84,7 @@ class CoinModelTest
       if (sum2 == 3) sum1 else coin
     })
     show(coinModel2a, "coinModel2a")
-    expectResult(Map(0 -> 0.5, 2 -> 0.5))(coinModel2a)
+    coinModel2a.toMap should equal (Map(0 -> 0.5, 2 -> 0.5))
   }
 
   it should "show the results of coinModel2b" in {
@@ -98,7 +98,7 @@ class CoinModelTest
       }
     }
     show(coinModel2b, "coinModel2b")
-    expectResult(Map(0 -> 0.5, 2 -> 0.5))(coinModel2b)
+    coinModel2b.toMap should equal (Map(0 -> 0.5, 2 -> 0.5))
   }
 
   it should "show the results of coinModel3a" in {
@@ -108,7 +108,8 @@ class CoinModelTest
       for (c1 <- c; c2 <- c) yield (c1, c2)
     }
     show(coinModel3a, "coinModel3a")
-    expectResult(Map((true, true) -> 0.5, (false, false) -> 0.5))(coinModel3a)
+    coinModel3a.toMap should equal (
+      Map((true, true) -> 0.5, (false, false) -> 0.5))
   }
 
   it should "show the results of coinModel3b" in {
@@ -121,7 +122,8 @@ class CoinModelTest
       for (c1 <- c; c2 <- c) yield (c1, c2)
     }
     show(coinModel3b, "coinModel3b")
-    expectResult(Map((true, true) -> 0.5, (false, false) -> 0.5))(coinModel3b)
+    coinModel3b.toMap should equal (
+      Map((true, true) -> 0.5, (false, false) -> 0.5))
   }
 
   it should "show the results of flipping 20 coins" in {
@@ -141,7 +143,8 @@ class CoinModelTest
     val flips20 = reify(trues(flips(0.5, 20)))
     show(flips20, "20 flips")
     val exact = 1.0 / (1 << 20)
-    flips20 should equal (Map(true -> exact, false -> (1.0 - exact)))
+    flips20.toMap should equal (
+      Map(true -> exact, false -> (1.0 - exact)))
 
     // Map for counting actual `&&` events.
     val events = scala.collection.mutable.HashMap[Boolean, Int]() ++=
@@ -160,7 +163,7 @@ class CoinModelTest
     show(flips20count, "20 flips (when counting events)")
     println("events: " + events)
     flips20count should equal (flips20)
-    events should equal (Map(true -> 20, false -> 20))
+    events.toMap should equal (Map(true -> 20, false -> 20))
   }
 
 }

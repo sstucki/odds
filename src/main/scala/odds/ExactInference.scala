@@ -1,7 +1,7 @@
 package odds
 
 /** Simple, exact inference for the ODDS language. */
-trait ExactInference extends OddsIntf with DistIterables {
+trait ExactInference extends OddsIntf with DistMaps {
 
   import CommittedChoice.Environment
 
@@ -21,7 +21,7 @@ trait ExactInference extends OddsIntf with DistIterables {
   final case class RandVarOrElse[+A](x: RandVar[A], y: RandVar[A])
       extends RandVar[A]
 
-  def choice[A](xs: (A, Prob)*): Rand[A] = RandVarChoice(xs)
+  def choice[A](xs: (A, Prob)*): Rand[A] = RandVarChoice(DistMap(xs: _*))
 
   /**
    * Reify a random variable representing a probabilistic computation.
@@ -29,7 +29,7 @@ trait ExactInference extends OddsIntf with DistIterables {
    * @return the distribution over the values of this random variable.
    */
   def reify[A](x: RandVar[A]): Dist[A] =
-    consolidate(explore(x, 1, Map()){ (y, p, e) => Iterable(y -> p) })
+    consolidate(explore(x, 1, Map()){ (y, p, e) => DistMap(y -> p) })
 
   def explore[A, B](x: RandVar[A], p: Prob, env: Environment)(
     cont: (A, Prob, Environment) => Dist[B]): Dist[B] = x match {
