@@ -1,27 +1,7 @@
 package odds
 
 /** Simple, exact inference for the ODDS language. */
-trait ExactInference extends OddsIntf with DistMaps {
-
-  import CommittedChoice.Environment
-
-  type Rand[+A] = RandVar[A]
-
-  sealed abstract class RandVar[+A] extends RandIntf[A] {
-
-    def flatMap[B](f: A => Rand[B]): Rand[B] = RandVarFlatMap(this, f)
-
-    def orElse[B >: A](that: Rand[B]): Rand[B] = RandVarOrElse(this, that)
-  }
-
-  final case class RandVarChoice[+A](dist: Dist[A])
-      extends RandVar[A] with CommittedChoice[A]
-  final case class RandVarFlatMap[+A, B](x: RandVar[B], f: B => Rand[A])
-      extends RandVar[A] with CommittedChoice[Rand[A]]
-  final case class RandVarOrElse[+A](x: RandVar[A], y: RandVar[A])
-      extends RandVar[A]
-
-  def choice[A](xs: (A, Prob)*): Rand[A] = RandVarChoice(dist(xs: _*))
+trait ExactInference extends DelayedChoiceIntf with DistMaps {
 
   /**
    * Reify a random variable representing a probabilistic computation.
@@ -31,6 +11,10 @@ trait ExactInference extends OddsIntf with DistMaps {
   def reify[A](x: RandVar[A]): Dist[A] =
     consolidate(explore(x, 1, Map()){ (y, p, e) => dist(y -> p) })
 
+  /**
+   * Explore the search tree of a random computation using
+   * continuation-passing style.
+   */
   def explore[A, B](x: RandVar[A], p: Prob, env: Environment)(
     cont: (A, Prob, Environment) => Dist[B]): Dist[B] = x match {
     case x @ RandVarChoice(dist) => x.choice(env) match {

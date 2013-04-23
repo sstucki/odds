@@ -8,31 +8,7 @@ import scala.collection.mutable
  * This trait implements importance sampling as described in "Embedded
  * Probabilistic Programming" by Oleg Kiselyov and Chung-chieh Shan.
  */
-trait LocalImportanceSampling extends OddsIntf with DistMaps {
-
-  import CommittedChoice.Environment
-
-  type Rand[+A] = RandVar[A]
-
-  sealed abstract class RandVar[+A] extends RandIntf[A] {
-
-    def flatMap[B](f: A => Rand[B]): Rand[B] = RandVarFlatMap(this, f)
-
-    def orElse[B >: A](that: Rand[B]): Rand[B] = RandVarOrElse(this, that)
-  }
-
-  final case class RandVarChoice[+A](dist: Dist[A])
-      extends RandVar[A] with CommittedChoice[A]
-  final case class RandVarFlatMap[+A, B](x: RandVar[B], f: B => Rand[A])
-      extends RandVar[A] with CommittedChoice[Rand[A]]
-  final case class RandVarOrElse[+A](x: RandVar[A], y: RandVar[A])
-      extends RandVar[A]
-
-  def choice[A](xs: (A, Prob)*): Rand[A] = RandVarChoice(dist(xs: _*))
-
-
-  /** Pseudo-random number generator used for sampling. */
-  //val prng = new java.util.Random
+trait LocalImportanceSampling extends DelayedChoiceIntf with DistMaps {
 
   /**
    * Approximate the distribution defined by a probabilistic
@@ -40,10 +16,16 @@ trait LocalImportanceSampling extends OddsIntf with DistMaps {
    *
    * @param samples the number of samples used to approximate the
    *        distribution.
+   * @param depth the look-ahead depth used during exploration.
+   *        `0` corresponds to rejection sampling.
+   * @param error the maximum upper bound on the total weight of
+   *        unexplored values.
+   * @param x the random variable to reify.
    * @return an approximation of the distribution over the values
    *         of this random variable.
    */
-  def sample[A](samples: Int, depth: Int, error: Prob = 0.0)(x: Rand[A]): Dist[A] = {
+  def sample[A](samples: Int, depth: Int = 1, error: Prob = 0.0)(
+    x: Rand[A]): Dist[A] = {
     var d: Dist[A] = dist()
     var solCount = 0;
     var runCount = 0;
@@ -60,6 +42,7 @@ trait LocalImportanceSampling extends OddsIntf with DistMaps {
   abstract class BranchClosure[+A] extends Function2[Prob, Int, ExploreRes[A]]
   type ExploreRes[+A] = (Dist[A], Dist[BranchClosure[A]])
 
+  /** Generate a single "sample" for importance sampling. */
   def sample1[A](x: RandVar[A], depth: Int, error: Prob): Dist[A] = {
 
     val initClos = new BranchClosure[A] {
