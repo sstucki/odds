@@ -143,21 +143,23 @@ class AppendModelTest
   behavior of "AppendModel"
 
   it should "show the results of appendModel1" in {
-    val (d, e) = appendModel1.reify(1000)
+    val (d, e) = reify(1000)(appendModel1)
     show(d, "appendModel1")
-    d should equal (Map(List(true, true, true, false, false) -> 1.0))
+    d.toMap should equal (Map(List(true, true, true, false, false) -> 1.0))
     e should equal (0)
   }
 
   it should "show the results of appendModel2" in {
-    val (d, e) = appendModel2.reify(1000)
+    val (d, e) = reify(1000)(appendModel2)
     show(d, "appendModel2")
-    d should equal (Map(List(false, false, false) -> 0.5, List(true, false, false) -> 0.5))
+    d.toMap should equal (Map(
+      List(false, false, false) -> 0.5,
+      List(true, false, false) -> 0.5))
     e should equal (0)
   }
 
   it should "show the results of appendModel3" in {
-    val (d, e) = appendModel3.reify(5)
+    val (d, e) = reify(5)(appendModel3)
     show(d, "appendModel3")
     d.size should be >= 5
     d should contain (t3, 0.5)
@@ -168,7 +170,7 @@ class AppendModelTest
   }
 
   it should "show the results of appendModel4" in {
-    val (d, e) = appendModel4.reify(1)
+    val (d, e) = reify(1)(appendModel4)
     show(d, "appendModel4")
     d.size should be >= 1
     d foreach {
@@ -181,7 +183,7 @@ class AppendModelTest
   }
 
   it should "show the results of appendModel5" in {
-    val (d, e) = appendModel5.reify(5)
+    val (d, e) = reify(5)(appendModel5)
     show(d, "appendModel5")
     d.size should be >= 5
     d foreach {
@@ -192,7 +194,7 @@ class AppendModelTest
   }
 
   it should "show the results of appendModel6" in {
-    val (d, e) = appendModel6.reify(5)
+    val (d, e) = reify(5)(appendModel6)
     show(d, "appendModel6")
     d.size should be >= 5
     d foreach {
@@ -203,7 +205,7 @@ class AppendModelTest
   }
 
   it should "show the results of appendModel3b" in {
-    val (d, e) = appendModel3b.reify(5)
+    val (d, e) = reify(5)(appendModel3b)
     show(d, "appendModel3b")
     d.size should be >= 5
     d should contain (t3, 0.5)
@@ -214,7 +216,7 @@ class AppendModelTest
   }
 
   it should "show the results of appendModel4b" in {
-    val (d, e) = appendModel4b.reify(1)
+    val (d, e) = reify(1)(appendModel4b)
     show(d, "appendModel4b")
     d.size should be >= 1
     d foreach {
@@ -227,7 +229,7 @@ class AppendModelTest
   }
 
   it should "show the results of appendModel5b" in {
-    val (d, e) = appendModel5b.reify(5)
+    val (d, e) = reify(5)(appendModel5b)
     show(d, "appendModel5b")
     d.size should be >= 5
     d foreach {

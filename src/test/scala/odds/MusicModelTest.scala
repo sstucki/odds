@@ -111,8 +111,8 @@ class MusicModelDepthBoundTest
   behavior of "MusicModel with depth bound Inference"
 
   it should "show the results of dept-bound inferring main simple" in {
-    val (r, p) = main_simple.reify(10000)
-    show(r, "depth-bound main simple " + p)
+    val (r, p) = reify(10000, error = 0.4)(main_simple)
+    show(r, "depth-bound main simple, err < " + p)
   }
 }
 

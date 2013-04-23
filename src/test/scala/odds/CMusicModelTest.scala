@@ -9,8 +9,8 @@ import org.scalatest.FlatSpec
 trait CMusicModel extends CListOddsLang with Notes {
   val octave = List(
     A, Asharp, B, C, Csharp, D, Dsharp, E, F, Fsharp, G, Gsharp,
-	  A, Asharp, B, C, Csharp, D, Dsharp, E, F, Fsharp, G, Gsharp,
-	  A, Asharp, B, C, Csharp, D, Dsharp, E, F, Fsharp, G, Gsharp)
+    A, Asharp, B, C, Csharp, D, Dsharp, E, F, Fsharp, G, Gsharp,
+    A, Asharp, B, C, Csharp, D, Dsharp, E, F, Fsharp, G, Gsharp)
 
   def note_to_int(x: Note) = x match {
     case A      => 0
@@ -88,7 +88,7 @@ class CMusicModelLocalImportanceSamplingTest
     with FlatSpec {
 
   behavior of "MusicModel with local important sampling"
-
+/*
   it should "show the results of local-important sampled main simple" in {
     val r = sample(1000, 2)(main_simple)
     show(r, "local-important sampled main simple")
@@ -97,5 +97,5 @@ class CMusicModelLocalImportanceSamplingTest
   it should "show the results of local-important sampled main" in {
     val r = sample(1000, 2)(main)
     show(r, "local-important sampled main")
-  }
+  }*/
 }

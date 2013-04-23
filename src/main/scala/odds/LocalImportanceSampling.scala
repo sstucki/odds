@@ -8,7 +8,7 @@ import scala.collection.mutable
  * This trait implements importance sampling as described in "Embedded
  * Probabilistic Programming" by Oleg Kiselyov and Chung-chieh Shan.
  */
-trait LocalImportanceSampling extends OddsIntf with DistIterables {
+trait LocalImportanceSampling extends OddsIntf with DistMaps {
 
   import CommittedChoice.Environment
 
@@ -28,10 +28,11 @@ trait LocalImportanceSampling extends OddsIntf with DistIterables {
   final case class RandVarOrElse[+A](x: RandVar[A], y: RandVar[A])
       extends RandVar[A]
 
-  def choice[A](xs: (A, Prob)*): Rand[A] = RandVarChoice(xs)
+  def choice[A](xs: (A, Prob)*): Rand[A] = RandVarChoice(dist(xs: _*))
+
 
   /** Pseudo-random number generator used for sampling. */
-  val prng = new java.util.Random
+  //val prng = new java.util.Random
 
   /**
    * Approximate the distribution defined by a probabilistic
@@ -43,18 +44,17 @@ trait LocalImportanceSampling extends OddsIntf with DistIterables {
    *         of this random variable.
    */
   def sample[A](samples: Int, depth: Int, error: Prob = 0.0)(x: Rand[A]): Dist[A] = {
-    val distMap = new mutable.HashMap[A, Prob]()
+    var d: Dist[A] = dist()
     var solCount = 0;
     var runCount = 0;
     while (runCount < samples) {
-      for ((v, p) <- sample1(x, depth, error)) {
-        distMap(v) = distMap.getOrElse(v, 0.0) + p
-        solCount += 1
-      }
+      val sd = sample1(x, depth, error)
+      d ++= sd
+      solCount += sd.size
       runCount += 1
     }
     println("importance sampler: " + runCount + " samples, " + solCount + " solutions.")
-    distMap
+    d
   }
 
   abstract class BranchClosure[+A] extends Function2[Prob, Int, ExploreRes[A]]
@@ -64,28 +64,22 @@ trait LocalImportanceSampling extends OddsIntf with DistIterables {
 
     val initClos = new BranchClosure[A] {
       def apply(p, d) = explore(x, p, Map(), d) {
-        (y, q, e, k) => (Iterable(y -> q), Iterable())
+        (y, q, e, k) => (dist(y -> q), dist())
       }
     }
-    val solutions = new mutable.ArrayBuffer[(A, Prob)]()
-    var branches: Dist[BranchClosure[A]] = Iterable(initClos -> 1)
+    var solutions: Dist[A] = dist()
+    var branches: Dist[BranchClosure[A]] = dist(initClos -> 1)
 
     // Keep exploring candidate branches until none remain.
-    while (!branches.isEmpty) {
+    while (!branches.isEmpty &&
+      (branches.totalWeight != 0.0) &&  // Don't explore infinities
+      (branches.totalWeight >= error)) {
+
       // Pick a branch at random
-      val (bcs, weights) = branches.toArray.unzip
-      val dt = DistTree(weights, prng)
-      if ((dt.totalWeight < error) || (dt.totalWeight == 0.0)) {
-        // We got to stop exploring infinities...
-        //println("cut off: " + dt.totalWeight + " < " + error + ", " +
-        //  solutions.length + "solutions so far.")
-        return solutions
-      }
-      val idx = dt.nextRandom._1
-      val bc = bcs(idx)
+      val bc = branches.nextSample
 
       // Continue exploring the search tree to depth `depth`.
-      val (sols, brs) = bc(dt.totalWeight, depth)
+      val (sols, brs) = bc(branches.totalWeight, depth)
       solutions ++= sols
       branches = brs
     }
@@ -102,22 +96,22 @@ trait LocalImportanceSampling extends OddsIntf with DistIterables {
   def explore[A, B](x: RandVar[A], p: Prob, env: Environment, depth: Int)(
     cont: (A, Prob, Environment, Int) => ExploreRes[B])
       : ExploreRes[B] = x match {
-    case x @ RandVarChoice(dist) => x.choice(env) match {
+    case x @ RandVarChoice(d) => x.choice(env) match {
       case Some(v) => {
-        assert(dist exists (_._1 == v), v + " not in " + dist)
+        assert(d exists (_._1 == v), v + " not in " + d)
         cont(v, p, env, depth)
       }
       case None => {
         // Closure for further exploring this branch
         val exploreChoices = new BranchClosure[B] {
-          def apply(p, d) = {
-            val res = dist map {
+          def apply(p, k) = {
+            val res = d map {
               case (v, q) =>
                 x.withChoice(env, v) { e =>
-                  cont(v, p * q, e, d)
+                  cont(v, p * q, e, k)
                 }
             }
-            val z: ExploreRes[B] = (Iterable(), Iterable())
+            val z: ExploreRes[B] = (dist(), dist())
             res.foldLeft(z){
               case ((sAcc, bAcc), (s, b)) => (sAcc ++ s, bAcc ++ b)
             }
@@ -126,10 +120,10 @@ trait LocalImportanceSampling extends OddsIntf with DistIterables {
 
         // Don't count certainties as choices.
         val depth1 =
-          if (!dist.isEmpty && dist.tail.isEmpty) depth else depth - 1
+          if (!d.isEmpty && d.tail.isEmpty) depth else depth - 1
         if (depth1 < 0) {
           // Return parameters needed to further explore this branch
-          (Iterable(), Iterable(exploreChoices -> p))
+          (dist(), dist(exploreChoices -> p))
         } else {
           // Explore sub-branches and return result
           exploreChoices(p, depth1)
