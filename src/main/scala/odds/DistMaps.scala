@@ -75,8 +75,10 @@ trait DistMaps extends DistIntf {
     // -- Iterable[A, Double] API --
 
     def ++[B >: A](xs: Map[B, Prob]): Dist[B] = {
+      val m = toMap[B, Prob]
+      val (z, ys) = if (xs.size > m.size) (xs, m) else (m, xs)
 
-      // Merge the underlying map of this distribution `m` with `xs`
+      // Merge the underlying map of this distribution with `xs`
       val d = (xs /: _dist) { (xs, x) =>
         val vp = (x._1, xs.getOrElse(x._1, 0.0) + x._2)
         xs + vp
@@ -87,7 +89,7 @@ trait DistMaps extends DistIntf {
     @inline def ++[B >: A](xs: GenTraversableOnce[(B, Prob)]): Dist[B] = {
       val m: Map[B, Prob] = xs.toMap[B, Prob] match {
         case m: Map[B, Prob] => m
-        case m => Map() ++ m  // Convert general maps to immutable ones.
+        case m => Map() ++ m  // Convert generic maps to immutable ones.
       }
       this ++ m
     }
@@ -112,7 +114,7 @@ trait DistMaps extends DistIntf {
 
     @inline
     override def toMap[T, U](implicit ev: (A, Prob) <:< (T, U)): Map[T, U] =
-      _dist.toMap[T, U]
+      _dist.asInstanceOf[Map[T, U]]
 
 
     // -- Any API --
