@@ -76,12 +76,12 @@ trait DistMaps extends DistIntf {
 
     def ++[B >: A](xs: Map[B, Prob]): Dist[B] = {
       val m = toMap[B, Prob]
-      val (z, ys) = if (xs.size > m.size) (xs, m) else (m, xs)
 
-      // Merge the underlying map of this distribution with `xs`
-      val d = (xs /: _dist) { (xs, x) =>
-        val vp = (x._1, xs.getOrElse(x._1, 0.0) + x._2)
-        xs + vp
+      // Merge the smaller map into the bigger one.
+      val (z, ys) = if (xs.size > m.size) (xs, m) else (m, xs)
+      val d = (z /: ys) { (z, y) =>
+        val vp = (y._1, z.getOrElse(y._1, 0.0) + y._2)
+        z + vp
       }
       new Dist(d)
     }
