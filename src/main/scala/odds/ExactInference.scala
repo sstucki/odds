@@ -18,7 +18,7 @@ trait ExactInference extends DelayedChoiceIntf {
         sls ++ dft(t(p))
       }
     }
-    
+
     consolidate(dft(explore(x)))
   }
 }

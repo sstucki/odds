@@ -8,7 +8,7 @@ import scala.collection.mutable
  * This trait implements importance sampling as described in "Embedded
  * Probabilistic Programming" by Oleg Kiselyov and Chung-chieh Shan.
  */
-trait LocalImportanceSampling extends DelayedChoiceIntf with DistMaps {
+trait LocalImportanceSampling extends DelayedChoiceIntf {
 
   /**
    * Approximate the distribution defined by a probabilistic

@@ -7,7 +7,7 @@ package odds
  * depth-first, iterative-deepening traversal of the search tree
  * defined by a probabilistic computation.
  */
-trait DepthBoundInference extends DelayedChoiceIntf with DistMaps {
+trait DepthBoundInference extends DelayedChoiceIntf {
 
   /**
    * Reify a random variable representing a probabilistic computation.
