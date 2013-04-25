@@ -39,95 +39,38 @@ trait LocalImportanceSampling extends DelayedChoiceIntf with DistMaps {
     d
   }
 
-  abstract class BranchClosure[+A] extends Function2[Prob, Int, ExploreRes[A]]
-  type ExploreRes[+A] = (Dist[A], Dist[BranchClosure[A]])
-
   /** Generate a single "sample" for importance sampling. */
   def sample1[A](x: RandVar[A], depth: Int, error: Prob): Dist[A] = {
 
-    val initClos = new BranchClosure[A] {
-      def apply(p, d) = explore(x, p, Map(), d) {
-        (y, q, e, k) => (dist(y -> q), dist())
+    // bounded look-ahead exploration of search tree
+    def lookAhead(r: ExploreRes[A], depth: Int): ExploreRes[A] =
+      if (depth <= 0) r
+      else {
+        val ExploreRes(sls, bts) = r
+        val z = ExploreRes(sls, dist())
+        (z /: bts) { (sb, tp) =>
+          val (t, p) = tp
+          val ExploreRes(slsAcc, btsAcc) = sb
+          val ExploreRes(sls, bts) = lookAhead(t(p), depth - 1)
+          ExploreRes(slsAcc ++ sls, btsAcc ++ bts)
+        }
       }
-    }
-    var solutions: Dist[A] = dist()
-    var branches: Dist[BranchClosure[A]] = dist(initClos -> 1)
+
+    var ExploreRes(solutions, branches) = lookAhead(explore(x), depth)
 
     // Keep exploring candidate branches until none remain.
     while (!branches.isEmpty &&
       (branches.totalWeight != 0.0) &&  // Don't explore infinities
       (branches.totalWeight >= error)) {
 
-      // Pick a branch at random
-      val bc = branches.nextSample
+      // Pick a branch thunk at random
+      val t = branches.nextSample
 
-      // Continue exploring the search tree to depth `depth`.
-      val (sols, brs) = bc(branches.totalWeight, depth)
-      solutions ++= sols
-      branches = brs
+      // Continue exploring the search tree with look-ahead `depth`.
+      val er = lookAhead(t(branches.totalWeight), depth)
+      solutions ++= er.solutions
+      branches = er.branches
     }
     solutions
-  }
-
-  /**
-   * Locally explore the search tree defined by a random variable.
-   *
-   * @returns a pair `(solutions, branches)` with `solutions` a
-   *          distribution over solutions discovered thus far, and
-   *          `branches` a distribution over unexplored branches.
-   */
-  def explore[A, B](x: RandVar[A], p: Prob, env: Environment, depth: Int)(
-    cont: (A, Prob, Environment, Int) => ExploreRes[B])
-      : ExploreRes[B] = x match {
-    case x @ RandVarChoice(d) => x.choice(env) match {
-      case Some(v) => {
-        assert(d exists (_._1 == v), v + " not in " + d)
-        cont(v, p, env, depth)
-      }
-      case None => {
-        // Closure for further exploring this branch
-        val exploreChoices = new BranchClosure[B] {
-          def apply(p, k) = {
-            val res = d map {
-              case (v, q) =>
-                x.withChoice(env, v) { e =>
-                  cont(v, p * q, e, k)
-                }
-            }
-            val z: ExploreRes[B] = (dist(), dist())
-            res.foldLeft(z){
-              case ((sAcc, bAcc), (s, b)) => (sAcc ++ s, bAcc ++ b)
-            }
-          }
-        }
-
-        // Don't count certainties as choices.
-        val depth1 =
-          if (!d.isEmpty && d.tail.isEmpty) depth else depth - 1
-        if (depth1 < 0) {
-          // Return parameters needed to further explore this branch
-          (dist(), dist(exploreChoices -> p))
-        } else {
-          // Explore sub-branches and return result
-          exploreChoices(p, depth1)
-        }
-      }
-    }
-    case t @ RandVarFlatMap(x, f) => explore(x, p, env, depth){ (y, q, e, k) =>
-      t.choice(env) match {
-        case Some(r) => explore(r, q, e, k)(cont)
-        case None => {
-          val r = f(y)
-          t.withChoice(e, r) { e1 =>
-            explore(r, q, e1, k)(cont)
-          }
-        }
-      }
-    }
-    case RandVarOrElse(x, y) => {
-      val (xd, xe) = explore(x, p, env, depth)(cont)
-      val (yd, ye) = explore(y, p, env, depth)(cont)
-      (xd ++ yd, xe ++ ye)
-    }
   }
 }

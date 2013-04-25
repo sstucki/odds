@@ -71,7 +71,6 @@ trait DistMaps extends DistIntf {
     @inline def orElse[B >: A](that: Dist[B]): Dist[B] = this ++ that
 
 
-
     // -- Iterable[A, Double] API --
 
     def ++[B >: A](xs: Map[B, Prob]): Dist[B] = {
