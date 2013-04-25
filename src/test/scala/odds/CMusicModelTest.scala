@@ -88,14 +88,14 @@ class CMusicModelLocalImportanceSamplingTest
     with FlatSpec {
 
   behavior of "MusicModel with local important sampling"
-/*
+
   it should "show the results of local-important sampled main simple" in {
-    val r = sample(1000, 2)(main_simple)
+    val r = sample(1000, 1)(main_simple)
     show(r, "local-important sampled main simple")
   }
 
   it should "show the results of local-important sampled main" in {
-    val r = sample(1000, 2)(main)
+    val r = sample(1000, 1)(main)
     show(r, "local-important sampled main")
-  }*/
+  }
 }
