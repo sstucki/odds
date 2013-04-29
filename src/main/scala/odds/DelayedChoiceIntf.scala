@@ -63,7 +63,7 @@ trait DelayedChoiceIntf extends OddsIntf with DistMaps {
           // Don't count certainties as choices.
           val certainty = !d.isEmpty && d.tail.isEmpty
           if (certainty) {
-            // Explore sub-branches and return result
+            // Continue exploring branch and return result
             val (v, q) = d.head
             x.withChoice(env, v) { e =>
               cont(v, p * q, e)
@@ -81,7 +81,7 @@ trait DelayedChoiceIntf extends OddsIntf with DistMaps {
       }
       case t @ RandVarFlatMap(x, f) =>
         explore0(x, p, env){ (y, q, e) =>
-          t.choice(env) match {
+          t.choice(e) match {
             case Some(r) => explore0(r, q, e)(cont)
             case None => {
               val r = f(y)
@@ -92,9 +92,9 @@ trait DelayedChoiceIntf extends OddsIntf with DistMaps {
           }
         }
       case RandVarOrElse(x, y) => {
-        val ExploreRes(xd, xe) = explore0(x, p, env)(cont)
-        val ExploreRes(yd, ye) = explore0(y, p, env)(cont)
-        ExploreRes(xd ++ yd, xe ++ ye)
+        val ExploreRes(xd, xb) = explore0(x, p, env)(cont)
+        val ExploreRes(yd, yb) = explore0(y, p, env)(cont)
+        ExploreRes(xd ++ yd, xb ++ yb)
       }
     }
 
