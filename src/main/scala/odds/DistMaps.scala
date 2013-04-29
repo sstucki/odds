@@ -32,10 +32,11 @@ trait DistMaps extends DistIntf {
     import DistMap._
 
     // Support and distribution tree -- only constructed if needed
-    protected[this] lazy val (_supportSeq, _distTree) = {
-      val (ks, vs) = _dist.toArray.unzip
-      (ks, DistTree(vs, prng))
-    }
+    protected[this] lazy val (_supportSeq, _distTree) =
+      if (_dist.isEmpty) (Nil, null) else {
+        val (ks, vs) = _dist.toArray.unzip
+        (ks, DistTree(vs, prng))
+      }
 
 
     // -- Dist API --
@@ -65,8 +66,10 @@ trait DistMaps extends DistIntf {
       else if (totalWeight == 0.0) DistMap()
       else this.scale(1 / totalWeight)
 
-    @inline def totalWeight = _distTree.totalWeight
-    @inline def nextSample = _supportSeq(_distTree.nextRandom._1)
+    @inline def totalWeight = if (_dist.isEmpty) 0.0 else _distTree.totalWeight
+    @inline def nextSample = if (_dist.isEmpty) {
+      throw new NoSuchElementException("attempt to sample from empty distribution")
+    } else _supportSeq(_distTree.nextRandom._1)
 
     @inline def orElse[B >: A](that: Dist[B]): Dist[B] = this ++ that
 
