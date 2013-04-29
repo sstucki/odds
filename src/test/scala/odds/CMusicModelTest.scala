@@ -90,12 +90,12 @@ class CMusicModelLocalImportanceSamplingTest
   behavior of "MusicModel with local important sampling"
 
   it should "show the results of local-important sampled main simple" in {
-    val r = sample(1000, 1)(main_simple)
+    val r = sample(1000, depth = 1, initDepth = 5, error = 0.0)(main_simple)
     show(r, "local-important sampled main simple")
   }
 
   it should "show the results of local-important sampled main" in {
-    val r = sample(1000, 1)(main)
+    val r = sample(1000, depth = 1, initDepth = 5, error = 0.0)(main)
     show(r, "local-important sampled main")
   }
 }

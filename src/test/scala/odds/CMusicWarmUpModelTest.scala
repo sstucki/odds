@@ -49,10 +49,10 @@ trait CListOddsLang extends OddsLang {
     case Nil => s.length===always(0)
     case hd::tl =>
       s flatMap {
-        case CNil => always(false)
+        case CNil => never //always(false)
         case CCons(rhd, rtail) =>
           if (rhd==hd) lobserve(rtail, tl)
-          else always(false)
+          else never //always(false)
       }
   }
   def asCList[A](x: List[A]): CList[A] = x match {

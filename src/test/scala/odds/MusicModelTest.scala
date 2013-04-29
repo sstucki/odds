@@ -6,7 +6,31 @@ import org.scalatest.FlatSpec
 // http://okmij.org/ftp/kakuritu/index.html#music
 // http://okmij.org/ftp/kakuritu/music2.ml
 
-trait MusicModel extends StreamOddsLang with Notes {
+trait ListOddsLang extends OddsLang {
+  // Lazy Lists
+  def infix_uniformSplit[A](s: List[A]): Rand[(List[A], List[A])] =
+    for (i <- uniform(0 to s.length : _*)) yield s.splitAt(i)
+  def infix_tail[A](rs: Rand[List[A]]): Rand[List[A]] =
+    for (s <- rs) yield s.tail
+  def infix_head[A](rs: Rand[List[A]]): Rand[A] =
+    for (s <- rs) yield s.head
+  def infix_length[A](rs: Rand[List[A]]): Rand[Int] =
+    for (s <- rs) yield s.length
+
+  def nil[A]: Rand[List[A]] = always(Nil.toList)
+  type PTransform[A] = List[A] => Rand[List[A]]
+  def lmap[A](f: A => Rand[A]): PTransform[A] = x => {
+    if (x.isEmpty) nil else
+    lmap(f)(x.tail).flatMap(xs => f(x.head).map(h => h :: xs))
+  }
+  def lappend[A](xs: Rand[List[A]], ys: Rand[List[A]]): Rand[List[A]] =
+    xs flatMap { x =>
+      if (x.isEmpty) ys else
+      lappend(always(x.tail), ys).map(zs => x.head :: zs)
+    }
+}
+
+trait MusicModel extends ListOddsLang with Notes {
   val octave = List(
     A, Asharp, B, C, Csharp, D, Dsharp, E, F, Fsharp, G, Gsharp,
     A, Asharp, B, C, Csharp, D, Dsharp, E, F, Fsharp, G, Gsharp,
@@ -61,7 +85,7 @@ trait MusicModel extends StreamOddsLang with Notes {
       maptranspose5 -> 0.05,
       maptranspose6 -> 0.05,
       maptranspose7 -> 0.1)
-  def transform(x: Stream[Note]): Rand[Stream[Note]] =
+  def transform(x: List[Note]): Rand[List[Note]] =
     if (x.isEmpty) nil else {
       for (
         input <- always(x);
@@ -73,8 +97,8 @@ trait MusicModel extends StreamOddsLang with Notes {
     }
 
   def driver(src: List[Note], dst: List[Note]) = {
-    val output = transform(src.toStream)
-    output===always(dst.toStream)
+    val output = transform(src)
+    always(true) when (output === always(dst))
   }
   def main_simple = driver(List(A, B, C), List(Asharp, C))
   def main = driver(List(E, A, C, E, A, C, B, A, Gsharp, A),
@@ -125,12 +149,12 @@ class MusicModelLocalImportanceSamplingTest
   behavior of "MusicModel with local important sampling"
 
   it should "show the results of local-important sampled main simple" in {
-    val r = sample(70, 3, error = 1e-10)(main_simple)
+    val r = sample(1000, depth = 1, initDepth = 5, error = 0.0)(main_simple)
     show(r, "local-important sampled main simple")
   }
 
   it should "show the results of local-important sampled main" in {
-    val r = sample(70, 3, error = 1e-10)(main)
+    val r = sample(1000, depth = 1, initDepth = 5, error = 0.0)(main)
     show(r, "local-important sampled main")
   }
 }
