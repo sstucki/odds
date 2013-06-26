@@ -29,4 +29,14 @@ trait DistIntf {
    * returns the empty distribution.
    */
   def normalize[A](xs: Dist[A]): Dist[A]
+
+  /** Companion object. */
+  object Dist {
+
+    /** Build a distribution from a sequence of value-weight pairs. */
+    def apply[A](xs: (A, Prob)*): Dist[A] = dist(xs: _*)
+
+    /** Extract a sequence of value-weight pairs from a distribution. */
+    def unapplySeq[A](dm: Dist[A]) = Some(dm.toList)
+  }
 }
