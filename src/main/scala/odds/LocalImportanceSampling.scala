@@ -43,12 +43,12 @@ trait LocalImportanceSampling extends DelayedChoiceIntf {
     def lookAhead(r: ExploreRes[A], depth: Int): ExploreRes[A] =
       if (depth <= 0) r
       else {
-        val ExploreRes(sls, bts) = r
+        val ExploreRes(sls, bts, _) = r
         val z = ExploreRes(sls, dist())
         (z /: bts) { (sb, tp) =>
           val (t, p) = tp
-          val ExploreRes(slsAcc, btsAcc) = sb
-          val ExploreRes(sls, bts) = lookAhead(t(p), depth - 1)
+          val ExploreRes(slsAcc, btsAcc, _) = sb
+          val ExploreRes(sls, bts, _) = lookAhead(t(p), depth - 1)
           ExploreRes(slsAcc ++ sls, btsAcc ++ bts)
         }
       }
@@ -56,7 +56,7 @@ trait LocalImportanceSampling extends DelayedChoiceIntf {
     // Generate a single "sample"
     def sample1(r: ExploreRes[A], depth: Int, error: Prob): Dist[A] = {
 
-      var ExploreRes(solutions, branches) = r
+      var ExploreRes(solutions, branches, _) = r
 
       // Keep exploring candidate branches until none remain.
       while (!branches.isEmpty &&

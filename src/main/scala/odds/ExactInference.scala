@@ -12,7 +12,7 @@ trait ExactInference extends DelayedChoiceIntf {
 
     // depth-first traversal of search tree
     def dft(r: ExploreRes[A]): Dist[A] = {
-      val ExploreRes(sls, bts) = r
+      val ExploreRes(sls, bts, _) = r
       (sls /: bts) { (sls, tp) =>
         val (t, p) = tp
         sls ++ dft(t(p))

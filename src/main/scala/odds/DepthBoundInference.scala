@@ -37,7 +37,7 @@ trait DepthBoundInference extends DelayedChoiceIntf {
 
     // bounded depth-first traversal of search tree
     def bdft(r: ExploreRes[A], depth: Int): (Dist[A], Prob) = {
-      val ExploreRes(sls, bts) = r
+      val ExploreRes(sls, bts, _) = r
       if (depth <= 0) (sls, bts.map(_._2).sum)
       else ((sls, 0.0) /: bts) { (se, tp) =>
         val (t, p) = tp

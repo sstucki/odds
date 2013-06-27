@@ -26,20 +26,24 @@ import org.scalatest.matchers.ShouldMatchers
  */
 trait GrassModel extends OddsLang {
 
+  // This is the standard version of the model.  Some choices are not
+  // "uniquely" identified (i.e. they have different IDs in different
+  // branches of the search tree) but this doesn't change the outcome.
   def grassModel = {
     val rain       = flip(0.3)
     val sprinkler  = flip(0.5)
-    val grassIsWet =
+    val grassIsWet = {
       flip(0.9) && rain      ||
       flip(0.8) && sprinkler ||
       flip(0.1)
+    }
     if (grassIsWet) rain else never
   }
-}
 
-trait GrassMonadicModel extends OddsLang {
-
-  def grassModel = for {
+  // This model neither identifies nor delays choices (i.e. choices
+  // have different IDs in every branch and are made exactly in the
+  // order specified below).
+  def grassModelMonadic = for {
     rain       <- flip(0.3)
     sprinkler  <- flip(0.5)
     x0         <- flip(0.9)
@@ -51,20 +55,64 @@ trait GrassMonadicModel extends OddsLang {
       x2
     res <- if (grassIsWet) always(rain) else never
   } yield res
-}
 
-trait GrassMonadicShortCutModel extends OddsLang {
+  // This model uniquely identifies all choices but does not delay
+  // them and it does not perform short-cutting.
+  def grassModelIdsNoShortcut = {
+    val rain      = flip(0.3)
+    val sprinkler = flip(0.5)
+    val x0        = flip(0.9)
+    val x1        = flip(0.8)
+    val x2        = flip(0.1)
+    val grassIsWet = for {
+      rainv      <- rain
+      sprinklerv <- sprinkler
+      x0v        <- x0
+      x1v        <- x1
+      x2v        <- x2
+    } yield {
+      x0v && rainv      ||
+      x1v && sprinklerv ||
+      x2v
+    }
+    if (grassIsWet) rain else never
+  }
 
-  def grassModel = for {
-    rain       <- flip(0.3)
-    sprinkler  <- flip(0.5)
-    x0         <- flip(0.9)
-    grassIsWet <- if (x0 && rain) always(true) else for {
-      x1       <- flip(0.8)
-      x2       <- if (x1 && sprinkler) always(true) else flip(0.1)
-    } yield x2
-    res <- if (grassIsWet) always(rain) else never
-  } yield res
+  // This model uniquely identifies all choices and performs
+  // short-cutting, but it does not delay choices.
+  def grassModelIdsNoDelay = {
+    val rain      = flip(0.3)
+    val sprinkler = flip(0.5)
+    val x0        = flip(0.9)
+    val x1        = flip(0.8)
+    val x2        = flip(0.1)
+    val grassIsWet = for {
+      rainv      <- rain
+      sprinklerv <- sprinkler
+      res <- {
+        x0 && always(rainv)      ||
+        x1 && always(sprinklerv) ||
+        x2
+      }
+    } yield res
+    if (grassIsWet) rain else never
+  }
+
+  // This model uniquely identifies all choices, delays them, and
+  // performs short-cutting.
+  def grassModelIds = {
+    val rain      = flip(0.3)
+    val sprinkler = flip(0.5)
+    val x0        = flip(0.9)
+    val x1        = flip(0.8)
+    val x2        = flip(0.1)
+    val grassIsWet = {
+      x0 && rain      ||
+      x1 && sprinkler ||
+      x2
+    }
+    if (grassIsWet) rain else never
+  }
 }
 
 class GrassModelTest
@@ -77,49 +125,22 @@ class GrassModelTest
   behavior of "GrassModel"
 
   it should "show the probability of rain given that the grass is wet" in {
-    val d = reify(grassModel)
-    show(d, "rain")
-    d foreach {
-      case (false, p) => p should be (0.322  plusOrMinus 1e-12)
-      case (true,  p) => p should be (0.2838 plusOrMinus 1e-12)
-    }
-  }
-}
-
-class GrassMonadicModelTest
-    extends GrassMonadicModel
-    with ExactInference
-    with OddsPrettyPrint
-    with FlatSpec
-    with ShouldMatchers {
-
-  behavior of "GrassMonadicModel"
-
-  it should "show the probability of rain given that the grass is wet" in {
-    val d = reify(grassModel)
-    show(d, "rain")
-    d foreach {
-      case (false, p) => p should be (0.322  plusOrMinus 1e-12)
-      case (true,  p) => p should be (0.2838 plusOrMinus 1e-12)
-    }
-  }
-}
-
-class GrassMonadicShortCutModelTest
-    extends GrassMonadicModel
-    with ExactInference
-    with OddsPrettyPrint
-    with FlatSpec
-    with ShouldMatchers {
-
-  behavior of "GrassMonadicShortCutModel"
-
-  it should "show the probability of rain given that the grass is wet" in {
-    val d = reify(grassModel)
-    show(d, "rain")
-    d foreach {
-      case (false, p) => p should be (0.322  plusOrMinus 1e-12)
-      case (true,  p) => p should be (0.2838 plusOrMinus 1e-12)
+    val ds = Array(
+      reify(grassModel),
+      reify(grassModelMonadic),
+      reify(grassModelIdsNoShortcut),
+      reify(grassModelIdsNoDelay),
+      reify(grassModelIds))
+    show(ds(0), "rain (default)")
+    show(ds(1), "rain (monadic)")
+    show(ds(2), "rain (all IDs unique, no delaying, no shortcuts)")
+    show(ds(3), "rain (all IDs unique, no delaying)")
+    show(ds(4), "rain (all IDs unique)")
+    ds foreach { d =>
+      d foreach {
+        case (false, p) => p should be (0.322  plusOrMinus 1e-12)
+        case (true,  p) => p should be (0.2838 plusOrMinus 1e-12)
+      }
     }
   }
 }
@@ -132,174 +153,23 @@ class GrassModelTreeGenTest
 
   behavior of "DelayedChoiceTreeGen"
 
-  it should "generate the search tree of GrassModel (delayed choice)" in {
-    val t = reify(grassModel)
-    println(t.mkTikzString)
-    t should be (TreeNode(Dist(
-      TreeNode(Dist(
-        TreeNode(Dist(
-          TreeLeaf(true) -> 1.0)) -> 0.3,
-        TreeNode(Dist(TreeNode(Dist(
-          TreeNode(Dist(
-            TreeLeaf(false) -> 1.0)) -> 0.5,
-          TreeNode(Dist(
-            TreeNode(Dist(
-              TreeLeaf(false) -> 1.0)) -> 0.1,
-            TreeNode(Dist()) -> 0.9)) -> 0.5)) -> 0.8,
-          TreeNode(Dist(
-            TreeNode(Dist(TreeLeaf(false) -> 1.0)) -> 0.1,
-            TreeNode(Dist()) -> 0.9)) -> 0.19999999999999996)) -> 0.7)) -> 0.9,
-      TreeNode(Dist(
-        TreeNode(Dist(
-          TreeNode(Dist(
-            TreeNode(Dist(
-              TreeLeaf(true) -> 1.0)) -> 0.3,
-            TreeNode(Dist(
-              TreeLeaf(false) -> 1.0)) -> 0.7)) -> 0.5,
-          TreeNode(Dist(
-            TreeNode(Dist(
-              TreeNode(Dist(TreeLeaf(true) -> 1.0)) -> 0.3,
-              TreeNode(Dist(TreeLeaf(false) -> 1.0)) -> 0.7)) -> 0.1,
-            TreeNode(Dist()) -> 0.9)) -> 0.5)) -> 0.8,
-        TreeNode(Dist(
-          TreeNode(Dist(
-            TreeNode(Dist(TreeLeaf(true) -> 1.0)) -> 0.3,
-            TreeNode(Dist(TreeLeaf(false) -> 1.0)) -> 0.7)) -> 0.1,
-          TreeNode(Dist()) -> 0.9)) -> 0.19999999999999996)) -> 0.09999999999999998)))
-  }
-}
-
-class GrassModelProbMonadTreeGenTest
-    extends GrassMonadicModel
-    with ProbMonadTreeGen
-    with FlatSpec
-    with ShouldMatchers {
-
-  behavior of "ProbMonadTreeGen"
-
-  it should "generate the search tree of GrassModel (prob monad)" in {
-    val t = reify(grassModel)
-    println(t.mkTikzString)
-    t.compact should be (TreeNode(Dist(
-      (TreeNode(Dist(
-        (TreeNode(Dist(
-          (TreeNode(Dist(
-            (TreeNode(Dist(
-              (TreeLeaf(true),0.1),
-              (TreeLeaf(true),0.9))),0.8),
-            (TreeNode(Dist(
-              (TreeLeaf(true),0.1),
-              (TreeLeaf(true),0.9))),0.19999999999999996))),0.9),
-          (TreeNode(Dist(
-            (TreeNode(Dist(
-              (TreeLeaf(true),0.1),
-              (TreeLeaf(true),0.9))),0.8),
-            (TreeNode(Dist(
-              (TreeLeaf(true),0.1),
-              (TreeNode(Dist()),0.9))),0.19999999999999996))),0.09999999999999998))),0.5),
-        (TreeNode(Dist(
-          (TreeNode(Dist(
-            (TreeNode(Dist(
-              (TreeLeaf(true),0.1),
-              (TreeLeaf(true),0.9))),0.8),
-            (TreeNode(Dist(
-              (TreeLeaf(true),0.1),
-              (TreeLeaf(true),0.9))),0.19999999999999996))),0.9),
-          (TreeNode(Dist(
-            (TreeNode(Dist(
-              (TreeLeaf(true),0.1),
-              (TreeNode(Dist()),0.9))),0.8),
-            (TreeNode(Dist(
-              (TreeLeaf(true),0.1),
-              (TreeNode(Dist()),0.9))),0.19999999999999996))),0.09999999999999998))),0.5))),0.3),
-      (TreeNode(Dist(
-        (TreeNode(Dist(
-          (TreeNode(Dist(
-            (TreeNode(Dist(
-              (TreeLeaf(false),0.1),
-              (TreeLeaf(false),0.9))),0.8),
-            (TreeNode(Dist(
-              (TreeLeaf(false),0.1),
-              (TreeNode(Dist()),0.9))),0.19999999999999996))),0.9),
-          (TreeNode(Dist(
-            (TreeNode(Dist(
-              (TreeLeaf(false),0.1),
-              (TreeLeaf(false),0.9))),0.8),
-            (TreeNode(Dist(
-              (TreeLeaf(false),0.1),
-              (TreeNode(Dist()),0.9))),0.19999999999999996))),0.09999999999999998))),0.5),
-        (TreeNode(Dist(
-          (TreeNode(Dist(
-            (TreeNode(Dist(
-              (TreeLeaf(false),0.1),
-              (TreeNode(Dist()),0.9))),0.8),
-            (TreeNode(Dist(
-              (TreeLeaf(false),0.1),
-              (TreeNode(Dist()),0.9))),0.19999999999999996))),0.9),
-          (TreeNode(Dist(
-            (TreeNode(Dist(
-              (TreeLeaf(false),0.1),
-              (TreeNode(Dist()),0.9))),0.8),
-            (TreeNode(Dist(
-              (TreeLeaf(false),0.1),
-              (TreeNode(Dist()),0.9))),0.19999999999999996))),0.09999999999999998))),0.5))),0.7))))  }
-}
-
-class GrassModelProbMonadShortCutTreeGenTest
-    extends GrassMonadicShortCutModel
-    with ProbMonadTreeGen
-    with FlatSpec
-    with ShouldMatchers {
-
-  behavior of "ProbMonadTreeGen"
-
-  it should "generate the search tree of GrassModel (prob monad)" in {
-    val t = reify(grassModel)
-    println(t.mkTikzString)
-    t.compact should be (TreeNode(Dist(
-      (TreeNode(Dist(
-        (TreeNode(Dist(
-          (TreeLeaf(true),0.9),
-          (TreeNode(Dist(
-            (TreeLeaf(true),0.8),
-            (TreeNode(Dist(
-              (TreeLeaf(true),0.1),
-              (TreeNode(Dist()),0.9))),0.19999999999999996))),0.09999999999999998))),0.5),
-        (TreeNode(Dist(
-          (TreeLeaf(true),0.9),
-          (TreeNode(Dist(
-            (TreeNode(Dist(
-              (TreeLeaf(true),0.1),
-              (TreeNode(Dist()),0.9))),0.8),
-            (TreeNode(Dist(
-              (TreeLeaf(true),0.1),
-              (TreeNode(Dist()),0.9))),0.19999999999999996))),0.09999999999999998))),0.5))),0.3),
-      (TreeNode(Dist(
-        (TreeNode(Dist(
-          (TreeNode(Dist(
-            (TreeLeaf(false),0.8),
-            (TreeNode(Dist(
-              (TreeLeaf(false),0.1),
-              (TreeNode(Dist()),0.9))),0.19999999999999996))),0.9),
-          (TreeNode(Dist(
-            (TreeLeaf(false),0.8),
-            (TreeNode(Dist(
-              (TreeLeaf(false),0.1),
-              (TreeNode(Dist()),0.9))),0.19999999999999996))),0.09999999999999998))),0.5),
-        (TreeNode(Dist(
-          (TreeNode(Dist(
-            (TreeNode(Dist(
-              (TreeLeaf(false),0.1),
-              (TreeNode(Dist()),0.9))),0.8),
-            (TreeNode(Dist(
-              (TreeLeaf(false),0.1),
-              (TreeNode(Dist()),0.9))),0.19999999999999996))),0.9),
-          (TreeNode(Dist(
-            (TreeNode(Dist(
-              (TreeLeaf(false),0.1),
-              (TreeNode(Dist()),0.9))),0.8),
-            (TreeNode(Dist(
-              (TreeLeaf(false),0.1),
-              (TreeNode(Dist()),0.9))),0.19999999999999996))),0.09999999999999998))),0.5))),0.7))))
+  it should "generate the search trees of the grass models" in {
+    val ts = Array(
+      reify(grassModel),
+      reify(grassModelMonadic),
+      reify(grassModelIdsNoShortcut),
+      reify(grassModelIdsNoDelay),
+      reify(grassModelIds))
+    val names = Array(
+      "default", "monadic", "all IDs unique, no delaying, no shortcuts)",
+      "all IDs unique, no delaying", "all IDs unique")
+    for (i <- 0 to 4) {
+      println("\n\ntree (" + names(i) + "):\n\n" + ts(i).mkTikzString)
+    }
+    ts(0) should be (Nil)
+    ts(0) should be (Nil)
+    ts(0) should be (Nil)
+    ts(0) should be (Nil)
+    ts(0) should be (Nil)
   }
 }

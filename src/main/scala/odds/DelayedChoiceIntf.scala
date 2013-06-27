@@ -29,9 +29,9 @@ trait DelayedChoiceIntf extends OddsIntf with DistMaps {
   final case class RandVarChoice[+A](dist: Dist[A])
       extends RandVar[A] with CommittedChoice[A]
   final case class RandVarFlatMap[+A, B](x: RandVar[B], f: B => Rand[A])
-      extends RandVar[A] with CommittedChoice[Rand[A]]
+      extends RandVar[A] with CommittedChoice[A]
   final case class RandVarOrElse[+A](x: RandVar[A], y: RandVar[A])
-      extends RandVar[A]
+      extends RandVar[A] with CommittedChoice[A]
 
   def choice[A](xs: (A, Prob)*): Rand[A] = RandVarChoice(dist(xs: _*))
 
@@ -39,21 +39,28 @@ trait DelayedChoiceIntf extends OddsIntf with DistMaps {
    * The result of a local exploration of the search tree defined by a
    * random variable.
    *
-   * @tparam A the type of the support of the random variable to be
-   *         explored.
+   * @tparam A the type of the support of the explored random variable.
    * @param solutions a distribution over solutions discovered thus
    *        far.
    * @param branches a distribution over thunks for further exploring
    *        partially explored branches.
+   * @param id the ID of the explored [[RandVar]] instance.
    */
   final case class ExploreRes[+A](
-    solutions: Dist[A], branches: Dist[Prob => ExploreRes[A]])
+    solutions: Dist[A], branches: Dist[Prob => ExploreRes[A]], id: Long = -1)
 
   /** Locally explore the search tree defined by a random variable. */
   def explore[A](x: RandVar[A]): ExploreRes[A] = {
 
+    type ContRes = (Either[A, Prob => ExploreRes[A]], Prob)
+
+    def contToEploreRes(cr: ContRes): ExploreRes[A] = cr match {
+      case (Left(v),  p) => ExploreRes(Dist(v -> p), Dist())
+      case (Right(t), p) => t(p)
+    }
+
     def explore0[B](x: RandVar[B], p: Prob, env: Environment)(
-      cont: (B, Prob, Environment) => ExploreRes[A]): ExploreRes[A] = x match {
+      cont: (B, Prob, Environment) => ContRes): ContRes = x match {
       case x @ RandVarChoice(d) => x.choice(env) match {
         case Some(v) => {
           assert(d exists (_._1 == v), v + " not in " + d)
@@ -69,37 +76,58 @@ trait DelayedChoiceIntf extends OddsIntf with DistMaps {
               cont(v, p * q, e)
             }
           } else {
-            // Return branch thunks
-            val branches = d map {
-              case (v, q) => x.withChoice(env, v) { e =>
-                (cont(v, _: Prob, e), p * q)
+            // // Return branch thunks
+            // val branches = d map {
+            //   case (v, q) => x.withChoice(env, v) { e =>
+            //     (cont(v, _: Prob, e), p * q)
+            //   }
+            // }
+            // ExploreRes(dist(), branches, x.id)
+
+            // Return thunk
+            (Right({ p: Prob =>
+              var vs = Dist[A]()
+              var ts = Dist[Prob => ExploreRes[A]]()
+              d foreach {
+                case (v, q) => x.withChoice(env, v) { e =>
+                  cont(v, p * q, e) match {
+                    case (Left(v),  w) => vs += (v -> w)
+                    case (Right(t), w) => ts += (t -> w)
+                  }
+                }
               }
-            }
-            ExploreRes(dist(), branches)
+              ExploreRes(vs, ts, x.id)
+            }) -> p)
           }
         }
       }
-      case t @ RandVarFlatMap(x, f) =>
-        explore0(x, p, env){ (y, q, e) =>
-          t.choice(e) match {
-            case Some(r) => explore0(r, q, e)(cont)
-            case None => {
-              val r = f(y)
-              t.withChoice(e, r) { e1 =>
-                explore0(r, q, e1)(cont)
-              }
-            }
+      case t @ RandVarFlatMap(x, f) => t.choice(env) match {
+        case Some(v) => cont(v, p, env)
+        case None => explore0(x, p, env) { (y, q, e) =>
+          explore0(f(y), q, e) { (z, w, e1) =>
+            t.withChoice(e1, z)(cont(z, w, _))
           }
         }
-      case RandVarOrElse(x, y) => {
-        val ExploreRes(xd, xb) = explore0(x, p, env)(cont)
-        val ExploreRes(yd, yb) = explore0(y, p, env)(cont)
-        ExploreRes(xd ++ yd, xb ++ yb)
+      }
+      case t @ RandVarOrElse(x, y) => t.choice(env) match {
+        case Some(v) => cont(v, p, env)
+        case None =>
+          (Right({ p: Prob =>
+            val xcr = explore0(x, p, env) {
+              (z, q, e) => t.withChoice(e, z)(cont(z, q, _))
+            }
+            val ycr = explore0(y, p, env){
+              (z, q, e) => t.withChoice(e, z)(cont(z, q, _))
+            }
+            val ExploreRes(xd, xb, _) = contToEploreRes(xcr)
+            val ExploreRes(yd, yb, _) = contToEploreRes(ycr)
+            ExploreRes(xd ++ yd, xb ++ yb, t.id)
+          }) -> p)
       }
     }
 
-    explore0(x, 1.0, Map()) {
-      (y, q, e) => ExploreRes(dist(y -> q), dist())
-    }
+    contToEploreRes(explore0(x, 1.0, Map()) {
+      (y, q, e) => (Left(y) -> q)
+    })
   }
 }
