@@ -26,11 +26,13 @@ trait TreeGenIntf {
       def nodeStyle(t: Tree[A]) = t match {
         case TreeNode(d, _) => if (d.isEmpty) "fail" else "intl"
         case TreeLeaf(_)    => "leaf"
+        case TreeStub(_)    => "stub"
       }
 
       def nodeName(t: Tree[A]) = t match {
         case TreeNode(_, n) => "={" + n + "}"
         case TreeLeaf(_)    => ""
+        case TreeStub(n)    => "={" + n + "}"
       }
 
       def mkTikzString0(t: Tree[A], i: Int, p: Prob, pTot: Prob,
@@ -51,6 +53,7 @@ trait TreeGenIntf {
           case TreeLeaf(v) => {
             st += "{$" + v + "$\\\\" + fmt(pTot) + "}"
           }
+          case TreeStub(_) => st += "{}"
         }
         if (root) {
           st += ";"
@@ -68,6 +71,7 @@ trait TreeGenIntf {
   final case class TreeNode[+A](
     children: Dist[Tree[A]], name: String) extends Tree[A]
   final case class TreeLeaf[+A](v: A) extends Tree[A]
+  final case class TreeStub(name: String) extends Tree[Nothing]
 }
 
 
@@ -80,7 +84,7 @@ trait DelayedChoiceTreeGen extends TreeGenIntf with DelayedChoiceIntf {
    *
    * @return the search tree corresponding to this random variable.
    */
-  def reify[A](x: Rand[A]): Tree[A] = {
+  def reify[A](x: Rand[A], maxDepth: Option[Int] = None): Tree[A] = {
 
     // Generate new IDs top-down for every generated tree
     var idCounter = 0
@@ -93,15 +97,19 @@ trait DelayedChoiceTreeGen extends TreeGenIntf with DelayedChoiceIntf {
     })
 
     // depth-first traversal of search tree
-    def dft(r: ExploreRes[A]): Tree[A] = {
+    def dft(r: ExploreRes[A], d: Option[Int]): Tree[A] = {
       val ExploreRes(sls, bts, i) = r
       val n = lookUpId(i)
-      val leaves = sls map { case (v, q) => (TreeLeaf(v), q) }
-      val nodes = bts map { case (t, q) => (dft(t(1.0)), q) }
-      val children = leaves ++ nodes
-      TreeNode(children, n)
+      if (d.getOrElse(1) <= 0) TreeStub(n)
+      else {
+        val d1 = d.map(_ - 1)
+        val leaves = sls map { case (v, q) => (TreeLeaf(v), q) }
+        val nodes = bts map { case (t, q) => (dft(t(1.0), d1), q) }
+        val children = leaves ++ nodes
+        TreeNode(children, n)
+      }
     }
 
-    dft(explore(x))
+    dft(explore(x), maxDepth)
   }
 }

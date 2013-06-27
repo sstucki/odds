@@ -99,3 +99,22 @@ class CMusicModelLocalImportanceSamplingTest
     show(r, "local-important sampled main")
   }
 }
+
+class CMusicModelTreeGenTest
+    extends CMusicModel
+    with DelayedChoiceTreeGen
+    with OddsPrettyPrint
+    with FlatSpec {
+
+  behavior of "MusicModel with local important sampling"
+
+  it should "show the first 3 layers of the main_simple tree" in {
+    val t = reify(main_simple, Some(3))
+    println("\n\ntree for main_simple:\n\n" + t.mkTikzString)
+  }
+
+  it should "show the first 3 layers of the main tree" in {
+    val t = reify(main, Some(3))
+    println("\n\ntree for main:\n\n" + t.mkTikzString)
+  }
+}
