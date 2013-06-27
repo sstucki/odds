@@ -72,7 +72,11 @@ trait DistMaps extends DistIntf {
     } else _supportSeq(_distTree.nextRandom._1)
 
     @inline def orElse[B >: A](that: Dist[B]): Dist[B] = this ++ that
-
+    @inline def +[B >: A](vp: (B, Prob)): Dist[B] = {
+      val m = this.toMap[B, Prob]
+      val vp1 = (vp._1, m.getOrElse(vp._1, 0.0) + vp._2)
+      new DistMap(m + vp1)
+    }
 
     // -- Iterable[A, Double] API --
 
@@ -85,7 +89,7 @@ trait DistMaps extends DistIntf {
         val vp = (y._1, z.getOrElse(y._1, 0.0) + y._2)
         z + vp
       }
-      new Dist(d)
+      new DistMap(d)
     }
 
     @inline def ++[B >: A](xs: GenTraversableOnce[(B, Prob)]): Dist[B] = {
@@ -134,8 +138,8 @@ trait DistMaps extends DistIntf {
     import scala.collection.mutable.MapBuilder
     import scala.collection.generic.CanBuildFrom
 
-    def apply[A](m: Map[A, Prob]) = new Dist(m)
-    def apply[A](xs: (A, Prob)*) = new Dist(xs.toMap)
+    @inline def apply[A](m: Map[A, Prob]) = new Dist(m)
+    @inline def apply[A](xs: (A, Prob)*) = new Dist(xs.toMap)
 
     class DistMapBuilder[A] extends Builder[(A, Prob), Dist[A]] {
       protected var elems = Map.empty[A, Prob]
@@ -156,11 +160,11 @@ trait DistMaps extends DistIntf {
       }
   }
 
-  def dist[A](xs: (A, Prob)*): Dist[A] = DistMap(xs: _*)
+  @inline def dist[A](xs: (A, Prob)*): Dist[A] = DistMap(xs: _*)
 
-  def scale[A](w: Prob, xs: Dist[A]): Dist[A] = xs.scale(w)
+  @inline def scale[A](w: Prob, xs: Dist[A]): Dist[A] = xs.scale(w)
 
-  def consolidate[A](xs: Dist[A]): Dist[A] = xs.consolidate
+  @inline def consolidate[A](xs: Dist[A]): Dist[A] = xs.consolidate
 
-  def normalize[A](xs: Dist[A]): Dist[A] = xs.normalize
+  @inline def normalize[A](xs: Dist[A]): Dist[A] = xs.normalize
 }
