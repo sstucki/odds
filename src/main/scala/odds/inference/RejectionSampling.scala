@@ -53,11 +53,20 @@ trait RejectionSampling extends OddsIntf with DistMaps {
     }
 
     var distMap = Dist[A]()
-    for (runCount <- 1 to samples; v <- x.v) {
+    var solCount = 0;
+    var runCount = 0;
+    while(runCount < samples) {
       if (runCount % (samples / 1024 + 1) == 0)
         print("\r" + progressBar(runCount, samples))
-      distMap += (v, 1.0)
+      for (v <- x.v) {
+        distMap += (v, 1.0)
+        solCount += 1
+      }
+      runCount += 1
     }
+    println("\r" + progressBar(runCount, samples))
+    println("rejection sampler: " + runCount + " samples, " + solCount +
+      " solutions.")
     scale(1.0 / samples, distMap)
   }
 }
