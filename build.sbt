@@ -16,7 +16,7 @@ resolvers ++= Seq(
 
 libraryDependencies ++= Seq(
     "org.scalatest" % "scalatest_2.10" % "2.0.M5b" % "test",
-    "EPFL" % "lms_2.10.1" % "0.3-SNAPSHOT")
+    "EPFL" % "lms_2.10" % "0.3-SNAPSHOT")
 
 //--- End of Dependencies
 
@@ -27,6 +27,9 @@ scalacOptions ++= Seq(
 
 // Documentation (scaladoc) options
 scalacOptions in doc += "-external-urls:scala=http://www.scala-lang.org/"
+
+// Add the macro paradise compiler plugin
+addCompilerPlugin("org.scala-lang.virtualized.plugins" % "macro-paradise_2.10.2-RC1" % "2.0.0-SNAPSHOT")
 
 // Our tests are not threadsafe so disabling parallel execution for now
 parallelExecution in Test := false
