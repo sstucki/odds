@@ -4,7 +4,85 @@ import language.implicitConversions
 
 
 /** Lifted logic and arithmetic operations. */
-trait OddsLang extends EmbeddedControls with OddsIntf with DistIntf {
+trait OddsLang extends EmbeddedControls with OddsIntf {
+
+  import probMonad._
+
+  /** Refined abstract random variable type. */
+  type Rand[+A] <: RandIntf[A]
+
+  /**
+   * Generic operations on random variables.
+   *
+   * This trait provides the public interface of the [[Rand]] type.
+   * It must be extended by any concrete instance of the random
+   * variable type.
+   */
+  trait RandIntf[+A] {
+    this: Rand[A] =>
+
+    /**
+     * Condition this random variable on an observation.
+     *
+     * Use case:
+     *
+     * {{{
+     *     val coin1 = flip(0.5)
+     *     val coin2 = flip(0.5)
+     *     val both  = coin1 && coin2
+     *
+     *     // conditional probability: P(both | coin1) = P(coin2)
+     *     both when coin1
+     * }}}
+     *
+     * @param cond the observation (random variable) to condition on.
+     * @return the conditional probability of `this` given `cond`,
+     *         i.e. `P(this | that)`
+     */
+    def when(cond: Rand[Boolean]): Rand[A] = bind {
+      c: Boolean => if(c) this else never
+    } (cond)
+  }
+
+
+  /**
+   * Make a (discrete) probabilistic choice.
+   *
+   * @tparam A the type of the support of the random variable
+   *         returned by this function.
+   * @param xs A sequence of value-weight pairs representing the
+   *        discrete distribution to chose from.
+   * @return a random variable representing the outcome of the choice.
+   */
+  @inline final def choose[A](xs: (A, Prob)*): Rand[A] =
+    probMonad.choose(Dist(xs: _*))
+
+  /**
+   * Make a probabilistic choice.
+   *
+   * @tparam A the type of the support of the random variable
+   *         returned by this function.
+   * @param xs A distribution to chose from.
+   * @return a random variable representing the outcome of the choice.
+   */
+  @inline final def choose[A](xs: Dist[A]): Rand[A] = probMonad.choose(xs)
+
+  /** Make a (discrete) probabilistic choice. */
+  @deprecated("use `choose` instead", "2013-08-19")
+  @inline final def choice[A, M[A]](xs: (A, Prob)*) = choose(xs: _*)
+
+  @inline final def always[A](x: A) = unit(x)
+
+  @inline final def never[A] = zero
+
+  def flip(p: Double): Rand[Boolean] = choose(true -> p, false -> (1-p))
+
+  def uniform[A](xs: A*): Rand[A] = if (xs.isEmpty) never else {
+    val p = 1.0 / xs.size
+    choice(xs.map((_, p)):_*)
+  }
+
+  import probMonad.ToScalaMonadic
 
   def liftOp2[A, B, C](x: Rand[A], y: Rand[B])(f: (A, B) => C): Rand[C] =
     for (a <- x; b <- y) yield f(a, b)

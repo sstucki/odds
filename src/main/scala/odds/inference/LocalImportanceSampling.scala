@@ -9,6 +9,10 @@ import scala.collection.mutable
  * Probabilistic Programming" by Oleg Kiselyov and Chung-chieh Shan.
  */
 trait LocalImportanceSampling extends DelayedChoiceIntf {
+  this: OddsLang =>
+
+  /** Concrete probability monad type class. */
+  object probMonad extends DelayedChoiceMonad
 
   /**
    * Approximate the distribution defined by a probabilistic
@@ -87,7 +91,8 @@ trait LocalImportanceSampling extends DelayedChoiceIntf {
       runCount += 1
     }
     println("\r" + progressBar(runCount, samples))
-    println("importance sampler: " + runCount + " samples, " + solCount + " solutions.")
+    println("importance sampler: " + runCount + " samples, " + solCount +
+      " solutions.")
     scale(1.0 / runCount, consolidate(d))
   }
 }

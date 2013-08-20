@@ -5,7 +5,6 @@ import scala.language.implicitConversions
 
 /** Distributions implemented as maps. */
 trait DistMaps extends DistIntf {
-  this: OddsIntf =>
 
   import scala.collection.{GenTraversableOnce, Iterable, IterableLike}
   import scala.collection.immutable.Map

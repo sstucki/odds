@@ -5,6 +5,8 @@ import org.scalatest.matchers.ShouldMatchers
 
 trait DrunkCoinModel extends OddsLang {
 
+  import probMonad.ToScalaMonadic
+
   def drunkCoin: Rand[Boolean] = {
     val toss = flip(0.5)
     val lost = flip(0.9)

@@ -4,6 +4,9 @@ import org.scalatest.FlatSpec
 import org.scalatest.matchers.ShouldMatchers
 
 trait CListOddsLang extends OddsLang {
+
+  import probMonad.ToScalaMonadic
+
   // A list where the tail itself is a random var.
   sealed abstract class CList[+A] {
     def length: Rand[Int] = this match {
@@ -70,6 +73,10 @@ trait CListOddsLang extends OddsLang {
 // http://okmij.org/ftp/kakuritu/music1a.ml
 
 trait CMusicWarmUpModel extends CListOddsLang with Notes {
+
+  import probMonad.ToScalaMonadic
+
+
   // Note Transformations
 
   // Transpose a note by 1 interval

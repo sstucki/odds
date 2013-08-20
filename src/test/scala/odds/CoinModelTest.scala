@@ -10,6 +10,8 @@ class CoinModelTest
     with FlatSpec
     with ShouldMatchers {
 
+  import probMonad.ToScalaMonadic
+
   behavior of "ExactInference"
 
   it should "show the results of cond1" in {

@@ -15,24 +15,26 @@ trait TrafficModel extends OddsLang {
   type Action = String
   type Driver = Rand[Light] => Rand[Action]
 
+  import probMonad.ToScalaMonadic
 
-  val trafficLight = choice(Red -> 0.5, Yellow -> 0.1, Green -> 0.4) dbg "light"
+  val trafficLight = choice(Red -> 0.5, Yellow -> 0.1, Green -> 0.4)
+  //dbg "light"
 
   def otherLight(light: Rand[Light]) = light map {
     case Red => Green
     case Yellow => Red
     case Green => Red
-  } dbg "otherLight"
+  } //dbg "otherLight"
   def cautiousDriver(light: Rand[Light]) = light flatMap {
     case Red => always(Stop)
     case Yellow => choice(Stop -> 0.9, Drive -> 0.1)
     case Green => always(Drive)
-  } dbg "cautiousDriver"
+  } //dbg "cautiousDriver"
   def aggressiveDriver(light: Rand[Light]) = light flatMap {
     case Red => choice(Stop -> 0.9, Drive -> 0.1)
     case Yellow => choice(Stop -> 0.1, Drive -> 0.9)
     case Green => always(Drive)
-  } dbg "aggressiveDriver"
+  } //dbg "aggressiveDriver"
 
   def crash(driver1: Driver, driver2: Driver, light: Rand[Light]) = {
     light flatMap { l =>
@@ -52,7 +54,7 @@ trait TrafficModel extends OddsLang {
   def crash2(driver1: Driver, driver2: Driver, light: Rand[Light]) = {
     (driver1(light) === always(Drive) && (driver2(otherLight(light)) === always(Drive))) flatMap {
       case true =>
-        choice(Crash -> 0.9, NoCrash -> 0.1) dbg "result"
+        choice(Crash -> 0.9, NoCrash -> 0.1) //dbg "result"
       case _ =>
         always(NoCrash)
     }

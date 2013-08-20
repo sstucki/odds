@@ -7,6 +7,9 @@ import org.scalatest.FlatSpec
 // http://okmij.org/ftp/kakuritu/music2.ml
 
 trait ListOddsLang extends OddsLang {
+
+  import probMonad.ToScalaMonadic
+
   // Lazy Lists
   def infix_uniformSplit[A](s: List[A]): Rand[(List[A], List[A])] =
     for (i <- uniform(0 to s.length : _*)) yield s.splitAt(i)
@@ -31,6 +34,9 @@ trait ListOddsLang extends OddsLang {
 }
 
 trait MusicModel extends ListOddsLang with Notes {
+
+  import probMonad.ToScalaMonadic
+
   val octave = List(
     A, Asharp, B, C, Csharp, D, Dsharp, E, F, Fsharp, G, Gsharp,
     A, Asharp, B, C, Csharp, D, Dsharp, E, F, Fsharp, G, Gsharp,

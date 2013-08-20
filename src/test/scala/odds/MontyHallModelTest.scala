@@ -5,6 +5,8 @@ import org.scalatest.matchers.ShouldMatchers
 
 trait MontyHallModel extends OddsLang {
 
+  import probMonad.ToScalaMonadic
+
   def randomDoor = uniform(1, 2, 3)
 
   // Choose uniformly among remaining doors
@@ -28,6 +30,8 @@ trait MontyHallModel extends OddsLang {
 }
 
 trait MontyHallMonadicModel extends OddsLang {
+
+  import probMonad.ToScalaMonadic
 
   def randomDoor = uniform(1, 2, 3)
 

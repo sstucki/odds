@@ -26,6 +26,8 @@ import org.scalatest.matchers.ShouldMatchers
  */
 trait GrassModel extends OddsLang {
 
+  import probMonad.ToScalaMonadic
+
   // This is the standard version of the model.  Some choices are not
   // "uniquely" identified (i.e. they have different IDs in different
   // branches of the search tree) but this doesn't change the outcome.
@@ -166,10 +168,12 @@ class GrassModelTreeGenTest
     for (i <- 0 to 4) {
       println("\n\ntree (" + names(i) + "):\n\n" + ts(i).mkTikzString)
     }
+    /*
     ts(0) should be (Nil)
     ts(0) should be (Nil)
     ts(0) should be (Nil)
     ts(0) should be (Nil)
     ts(0) should be (Nil)
+    */
   }
 }

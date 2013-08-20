@@ -2,7 +2,7 @@ package odds
 
 /** Basic tree generator interface. */
 trait TreeGenIntf {
-  this: OddsIntf with DistIntf =>
+  this: OddsLang =>
 
   /** Tree class. */
   sealed abstract class Tree[+A] {
@@ -77,6 +77,10 @@ trait TreeGenIntf {
 
 /** Generate search tree for delayed choice monad. */
 trait DelayedChoiceTreeGen extends TreeGenIntf with DelayedChoiceIntf {
+  this: OddsLang =>
+
+  /** Concrete probability monad type class. */
+  object probMonad extends DelayedChoiceMonad
 
   /**
    * Reify a random variable representing a probabilistic computation
@@ -110,6 +114,7 @@ trait DelayedChoiceTreeGen extends TreeGenIntf with DelayedChoiceIntf {
       }
     }
 
+    println("generating tree...")
     dft(explore(x), maxDepth)
   }
 }

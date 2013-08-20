@@ -2,6 +2,10 @@ package odds
 
 /** Simple, exact inference for the ODDS language. */
 trait ExactInference extends DelayedChoiceIntf {
+  this: OddsLang =>
+
+  /** Concrete probability monad type class. */
+  object probMonad extends DelayedChoiceMonad
 
   /**
    * Reify a random variable representing a probabilistic computation.
@@ -19,6 +23,7 @@ trait ExactInference extends DelayedChoiceIntf {
       }
     }
 
+    println("running exact inference...")
     consolidate(dft(explore(x)))
   }
 }

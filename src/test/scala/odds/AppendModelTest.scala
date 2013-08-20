@@ -5,6 +5,8 @@ import org.scalatest.matchers.ShouldMatchers
 
 trait AppendModel extends OddsLang {
 
+  import probMonad.ToScalaMonadic
+
   def randomList: Rand[List[Boolean]] = flip(0.5) flatMap {
     case false => always(Nil)
     case true  => for {

@@ -8,6 +8,10 @@ package odds
  * defined by a probabilistic computation.
  */
 trait DepthBoundInference extends DelayedChoiceIntf {
+  this: OddsLang =>
+
+  /** Concrete probability monad type class. */
+  object probMonad extends DelayedChoiceMonad
 
   /**
    * Reify a random variable representing a probabilistic computation.

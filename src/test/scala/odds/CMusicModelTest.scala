@@ -7,6 +7,9 @@ import org.scalatest.FlatSpec
 // http://okmij.org/ftp/kakuritu/music2.ml
 
 trait CMusicModel extends CListOddsLang with Notes {
+
+  import probMonad.ToScalaMonadic
+
   val octave = List(
     A, Asharp, B, C, Csharp, D, Dsharp, E, F, Fsharp, G, Gsharp,
     A, Asharp, B, C, Csharp, D, Dsharp, E, F, Fsharp, G, Gsharp,

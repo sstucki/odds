@@ -4,6 +4,9 @@ import org.scalatest.FlatSpec
 import org.scalatest.matchers.ShouldMatchers
 
 trait StreamOddsLang extends OddsLang {
+
+  import probMonad.ToScalaMonadic
+
   // Lazy Lists
   def infix_uniformSplit[A](s: Stream[A]): Rand[(Stream[A], Stream[A])] =
     for (i <- uniform(0 to s.length : _*)) yield s.splitAt(i)
@@ -48,6 +51,9 @@ trait Notes {
 // http://okmij.org/ftp/kakuritu/music1a.ml
 
 trait MusicWarmUpModel extends StreamOddsLang with Notes {
+
+  import probMonad.ToScalaMonadic
+
   // Note Transformations
 
   // Transpose a note by 1 interval

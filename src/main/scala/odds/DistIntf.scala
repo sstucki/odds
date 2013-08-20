@@ -5,12 +5,21 @@ import scala.language.implicitConversions
 
 /** Abstract distribution type and associated operations. */
 trait DistIntf {
-  this: OddsIntf =>
+
+  /**
+   * Probability weight type.
+   *
+   * Note: this need not be normalized to lie within `[0, 1]`.
+   */
+  type Prob = Double
 
   /** Distribution type. */
   type Dist[+A] <: Iterable[(A, Prob)]
 
-  /** Build a distribution from a sequence of value-weight pairs. */
+  /**
+   * Build a discrete distribution from a sequence of value-weight
+   * pairs.
+   */
   def dist[A](xs: (A, Prob)*): Dist[A]
 
   /** Scale the weights of a distribution by a given value. */

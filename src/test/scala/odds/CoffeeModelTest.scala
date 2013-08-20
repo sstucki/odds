@@ -8,6 +8,8 @@ import scala.language.postfixOps
 
 trait CoffeeModel extends OddsLang {
 
+  import probMonad.ToScalaMonadic
+
   object __match {
     def one[T](x: T): Rand[T] = always(x)
     def zero = never
@@ -73,10 +75,11 @@ class CoffeeModelTest
   behavior of "CoffeeModel"
 
   it should "show the coffeeModel" in {
+    import probMonad.ToScalaMonadic
     val coffeeModel1: Dist[String] = reify(
-      uniform("A","B","C","D","E").flatMap({
+      uniform("A","B","C","D","E").flatMap {
         case ShouldGrabCoffee(y) => always(y)
-      }).flatMap(x => x))
+      }.flatMap{ x => x})
     show(coffeeModel1, "coffeeModel1")
     coffeeModel1.toMap should equal {
       Map(

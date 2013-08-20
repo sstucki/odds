@@ -21,6 +21,9 @@ import org.scalatest.FlatSpec
 import org.scalatest.matchers.ShouldMatchers
 
 trait ColoredBallsModel extends OddsLang {
+
+  import probMonad.ToScalaMonadic
+
   def forall[A](obs: IndexedSeq[A], p: A => Rand[Boolean]) = {
     def check(i: Int): Rand[Boolean] =
       if (i==obs.length) always(true)

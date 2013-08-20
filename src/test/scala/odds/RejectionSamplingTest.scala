@@ -30,6 +30,7 @@ class RejectionSamplingTest
   }
 
   it should "show the results of cond3" in {
+    import probMonad.ToScalaMonadic
     val splitTrials = sample(1000){
       val x = flip(0.25)
       x flatMap {
@@ -46,6 +47,7 @@ class RejectionSamplingTest
   }
 
   it should "show the results of coinModel3b" in {
+    import probMonad.ToScalaMonadic
     val magicCoins = sample(1000) {
       def magicCoin = always(true).flatMap {
         case true => flip(0.5)

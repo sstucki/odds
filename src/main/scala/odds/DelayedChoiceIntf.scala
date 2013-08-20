@@ -1,16 +1,23 @@
 package odds
 
+import functors.ProbMonad
 import scala.collection.mutable
 
 /**
- * Odds interface with delayed-choice probability monad.
+ * Delayed-choice probability monad.
  *
- * This trait defines the [[Rand]] probability monad use in all
- * inference algorithms based on delayed evaluation.
+ * This trait contains the definition of the (base) type class
+ * instance of the probability monad use in all inference algorithms
+ * based on delayed evaluation.
  */
 trait DelayedChoiceIntf extends OddsIntf with DistMaps {
+  this: OddsLang =>
 
+  /** Concrete random variable type. */
   type Rand[+A] = RandVar[A]
+
+  //type Dist[+A] = DistMaps.this.Dist[A]
+
   type Environment = CommittedChoice.Environment
 
   /**
@@ -21,19 +28,34 @@ trait DelayedChoiceIntf extends OddsIntf with DistMaps {
    * tree-representation of the probabilistic computation.  The tree
    * can be walked during evaluation to reify the computation.
    */
-  sealed abstract class RandVar[+A] extends RandIntf[A] {
-    def flatMap[B](f: A => Rand[B]): Rand[B] = RandVarFlatMap(this, f)
-    def orElse[B >: A](that: Rand[B]): Rand[B] = RandVarOrElse(this, that)
+  abstract class RandVar[+A] extends RandIntf[A] with CommittedChoice[A]
+
+  final case class RandVarChoose[+A](xs: Dist[A]) extends RandVar[A]
+  final case class RandVarBind[+A, B](x: RandVar[B], f: B => RandVar[A])
+      extends RandVar[A]
+  final case class RandVarPlus[+A](x: RandVar[A], y: RandVar[A])
+      extends RandVar[A]
+
+  /**
+   * Delayed-choice probability monad type class instance.
+   *
+   * This trait defines the (base) type class instance of the
+   * probability monad use in all inference algorithms based on
+   * delayed evaluation.
+   */
+  trait DelayedChoiceMonad extends ProbMonad[Rand, Dist] {
+    @inline def fmap[A, B](f: A => B)(mx: Rand[A]) =
+      RandVarBind(mx, { y: A => unit(f(y)) })
+    @inline def unit[A](x: A) = choose(Dist(x -> 1.0))
+    @inline def join[A](mmx: Rand[Rand[A]]): Rand[A] =
+      RandVarBind(mmx, { y: Rand[A] => y })
+    @inline override def bind[A, B](f: A => Rand[B])(mx: Rand[A]) =
+      RandVarBind(mx, f)
+    @inline def zero[A] = choose[A](Dist())
+    @inline def plus[A](m1: Rand[A], m2: Rand[A]): Rand[A] =
+      RandVarPlus(m1, m2)
+    @inline def choose[A](xs: Dist[A]): Rand[A] = RandVarChoose(xs)
   }
-
-  final case class RandVarChoice[+A](dist: Dist[A])
-      extends RandVar[A] with CommittedChoice[A]
-  final case class RandVarFlatMap[+A, B](x: RandVar[B], f: B => Rand[A])
-      extends RandVar[A] with CommittedChoice[A]
-  final case class RandVarOrElse[+A](x: RandVar[A], y: RandVar[A])
-      extends RandVar[A] with CommittedChoice[A]
-
-  def choice[A](xs: (A, Prob)*): Rand[A] = RandVarChoice(dist(xs: _*))
 
   /**
    * The result of a local exploration of the search tree defined by a
@@ -61,34 +83,26 @@ trait DelayedChoiceIntf extends OddsIntf with DistMaps {
 
     def explore0[B](x: RandVar[B], p: Prob, env: Environment)(
       cont: (B, Prob, Environment) => ContRes): ContRes = x match {
-      case x @ RandVarChoice(d) => x.choice(env) match {
+      case x @ RandVarChoose(xs) => x.choice(env) match {
         case Some(v) => {
-          assert(d exists (_._1 == v), v + " not in " + d)
+          assert(xs exists (_._1 == v), v + " not in " + xs)
           cont(v, p, env)
         }
         case None => {
           // Don't count certainties as choices.
-          val certainty = !d.isEmpty && d.tail.isEmpty
+          val certainty = !xs.isEmpty && xs.tail.isEmpty
           if (certainty) {
             // Continue exploring branch and return result
-            val (v, q) = d.head
+            val (v, q) = xs.head
             x.withChoice(env, v) { e =>
               cont(v, p * q, e)
             }
           } else {
-            // // Return branch thunks
-            // val branches = d map {
-            //   case (v, q) => x.withChoice(env, v) { e =>
-            //     (cont(v, _: Prob, e), p * q)
-            //   }
-            // }
-            // ExploreRes(dist(), branches, x.id)
-
             // Return thunk
             (Right({ p: Prob =>
               var vs = Dist[A]()
               var ts = Dist[Prob => ExploreRes[A]]()
-              d foreach {
+              xs foreach {
                 case (v, q) => x.withChoice(env, v) { e =>
                   cont(v, p * q, e) match {
                     case (Left(v),  w) => vs += (v -> w)
@@ -101,7 +115,7 @@ trait DelayedChoiceIntf extends OddsIntf with DistMaps {
           }
         }
       }
-      case t @ RandVarFlatMap(x, f) => t.choice(env) match {
+      case t @ RandVarBind(x, f) => t.choice(env) match {
         case Some(v) => cont(v, p, env)
         case None => explore0(x, p, env) { (y, q, e) =>
           explore0(f(y), q, e) { (z, w, e1) =>
@@ -109,7 +123,7 @@ trait DelayedChoiceIntf extends OddsIntf with DistMaps {
           }
         }
       }
-      case t @ RandVarOrElse(x, y) => t.choice(env) match {
+      case t @ RandVarPlus(x, y) => t.choice(env) match {
         case Some(v) => cont(v, p, env)
         case None =>
           (Right({ p: Prob =>
@@ -130,4 +144,7 @@ trait DelayedChoiceIntf extends OddsIntf with DistMaps {
       (y, q, e) => (Left(y) -> q)
     })
   }
+}
+
+object DelayedChoiceMonad extends DistMaps {
 }
