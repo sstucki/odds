@@ -1,11 +1,14 @@
 package odds
 
+import language.experimental.macros
 import language.implicitConversions
 
 
 /** Lifted logic and arithmetic operations. */
-trait OddsLang extends EmbeddedControls with OddsIntf {
+trait OddsLang extends OddsIntf with EmbeddedControls {
 
+  import macros.MonadLifter
+  import macros.RandMacroOps
   import probMonad._
 
   /** Refined abstract random variable type. */
@@ -18,7 +21,7 @@ trait OddsLang extends EmbeddedControls with OddsIntf {
    * It must be extended by any concrete instance of the random
    * variable type.
    */
-  trait RandIntf[+A] {
+  trait RandIntf[+A] extends MonadLifter[Rand] with RandMacroOps[Rand] {
     this: Rand[A] =>
 
     /**
@@ -111,10 +114,6 @@ trait OddsLang extends EmbeddedControls with OddsIntf {
     liftOp2(x, y)(_ == _)
   def infix_!=[T](x: Rand[T], y: Rand[T]): Rand[Boolean] =
     liftOp2(x, y)(_ != _)
-
-  // -- Lifted arithmetic operations/relations --
-  def infix_+(x: Rand[Int], y: Rand[Int]): Rand[Int] = liftOp2(x, y)(_ + _)
-  def infix_-(x: Rand[Int], y: Rand[Int]): Rand[Int] = liftOp2(x, y)(_ - _)
 
   def __ifThenElse[T](cond: Rand[Boolean], tb: => Rand[T], fb: => Rand[T]) =
     cond flatMap { case true => tb; case false => fb }

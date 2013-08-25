@@ -5,6 +5,8 @@ import org.scalatest.matchers.ShouldMatchers
 
 import scala.language.postfixOps
 
+import inference._
+
 
 trait CoffeeModel extends OddsLang {
 

@@ -3,69 +3,53 @@ package odds
 import org.scalatest.FlatSpec
 import org.scalatest.matchers.ShouldMatchers
 
+import inference._
+
 trait AppendModel extends OddsLang {
 
-  import probMonad.ToScalaMonadic
+  implicit def list2randList[A](l: List[A]): Rand[List[A]] = probMonad.unit(l)
 
-  def randomList: Rand[List[Boolean]] = flip(0.5) flatMap {
-    case false => always(Nil)
-    case true  => for {
-      head <- flip(0.5)
-      tail <- randomList
-    } yield head :: tail
-  }
-
-  def append[T](x: Rand[List[T]], y: Rand[List[T]]): Rand[List[T]] = x flatMap {
-    case Nil => y
-    case h::tl => append(always(tl),y).map(xs=>h::xs) // full list as input, not very efficient?
-  }
-  def infix_++[T](x: Rand[List[T]], y: Rand[List[T]]): Rand[List[T]] =
-    for (xv <- x; yv <- y) yield xv ++ yv
+  def randomList: Rand[List[Boolean]] =
+    if (flip(0.5)) flip(0.5) :: randomList
+    else always(Nil)
 
   val t3 = List(true, true, true)
   val f2 = List(false, false)
 
-  val appendModel1 = {
-    append(always(t3), always(f2))
-  }
+  val appendModel1 = always(t3) ++ always(f2)
 
-  val appendModel2 = {
-    append(flip(0.5).map(_::Nil),always(f2))
-  }
+  val appendModel2 = (flip(0.5) :: always(Nil)) ++ f2
 
-  def appendModel3 = { // needs lazy strategy
-    append(always(t3),randomList)
-  }
+  // needs lazy strategy
+  def appendModel3 = always(t3) ++ randomList
 
   def appendModel4 = {
     // query: X:::f2 == t3:::f2 solve for X
-    randomList.flatMap{ x =>
-      append(always(x),always(f2)).flatMap {
-        case res if res == t3:::f2 => always((x,f2,res))
-        case _ => never
-      }
-    }
+    val x = randomList
+    val xf2 = x ::: always(f2)
+    (x, always(f2), xf2) when (xf2 === t3 ::: f2)
   }
 
   def appendModel5 = {
     // query: X:::Y == t3:::f2 solve for X,Y
-    randomList.flatMap{ x =>
-      randomList.flatMap{ y =>
-        append(always(x),always(y)).flatMap {
-          case res if res == t3:::f2 => always((x,y))
-          case _ => never
-    }}}
-  }
-
-  def appendModel6 = {
-    // query: X:::Y == t3:::f2 solve for X,Y
     val x = randomList
     val y = randomList
-    val xy = x ++ y
+    val xy = x ::: y
     (x, y) when (xy === always(t3 ::: f2))
   }
 
+  def appendModel6 = {
+    // query: X ++ Y == t3 ++ f2 solve for X,Y
+    val x = randomList
+    val y = randomList
+    val xy = x ++ y
+    (x, y) when (xy === t3 ++ f2)
+  }
+}
 
+trait AppendModelLazyTail extends OddsLang {
+
+  import probMonad.ToScalaMonadic
 
   // now try lists where the tail itself is a random var
 
@@ -103,6 +87,8 @@ trait AppendModel extends OddsLang {
     }}}
 
 
+  val t3 = List(true, true, true)
+  val f2 = List(false, false)
   val t3c = asCList(t3)
   val f2c = asCList(f2)
 
@@ -135,7 +121,7 @@ trait AppendModel extends OddsLang {
 }
 
 
-class AppendModelTest
+class AppendModelSpec
     extends AppendModel
     with DepthBoundInference
     with OddsPrettyPrint
@@ -205,6 +191,14 @@ class AppendModelTest
     }
     e should be < 0.5
   }
+}
+
+class AppendModelLazyTailSpec
+    extends AppendModelLazyTail
+    with DepthBoundInference
+    with OddsPrettyPrint
+    with FlatSpec
+    with ShouldMatchers {
 
   it should "show the results of appendModel3b" in {
     val (d, e) = reify(5)(appendModel3b)

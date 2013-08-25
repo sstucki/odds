@@ -1,4 +1,5 @@
 package odds
+package inference
 
 import scala.collection.mutable
 
@@ -12,7 +13,7 @@ trait LocalImportanceSampling extends DelayedChoiceIntf {
   this: OddsLang =>
 
   /** Concrete probability monad type class. */
-  object probMonad extends DelayedChoiceMonad
+  implicit object probMonad extends DelayedChoiceMonad
 
   /**
    * Approximate the distribution defined by a probabilistic

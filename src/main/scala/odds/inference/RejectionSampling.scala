@@ -1,4 +1,5 @@
 package odds
+package inference
 
 import functors.ProbMonad
 import scala.collection.mutable
@@ -14,7 +15,7 @@ trait RejectionSampling extends OddsIntf with DistMaps {
   final case class RandVar[+A](v: Option[A]) extends RandIntf[A]
 
   /** Concrete probability monad type class. */
-  object probMonad extends ProbMonad[Rand, Dist] {
+  implicit object probMonad extends ProbMonad[Rand, Dist] {
     @inline def fmap[A, B](f: A => B)(mx: Rand[A]) = RandVar(mx.v.map(f))
     @inline def unit[A](x: A) = choose(Dist(x -> 1.0))
     @inline def join[A](mmx: Rand[Rand[A]]): Rand[A] =

@@ -25,6 +25,8 @@ scalacOptions ++= Seq(
   "-deprecation", "-unchecked", "-Xexperimental", "-P:continuations:enable",
   "-Yvirtualize", "-feature", "-language:higherKinds")
 
+//scalacOptions ++= Seq("-Ymacro-debug-lite", "-Xlog-implicits")
+
 // Documentation (scaladoc) options
 scalacOptions in doc += "-external-urls:scala=http://www.scala-lang.org/"
 

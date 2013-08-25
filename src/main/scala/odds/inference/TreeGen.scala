@@ -1,4 +1,5 @@
 package odds
+package inference
 
 /** Basic tree generator interface. */
 trait TreeGenIntf {
@@ -80,7 +81,7 @@ trait DelayedChoiceTreeGen extends TreeGenIntf with DelayedChoiceIntf {
   this: OddsLang =>
 
   /** Concrete probability monad type class. */
-  object probMonad extends DelayedChoiceMonad
+  implicit object probMonad extends DelayedChoiceMonad
 
   /**
    * Reify a random variable representing a probabilistic computation

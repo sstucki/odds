@@ -3,6 +3,8 @@ package odds
 import org.scalatest.FlatSpec
 import org.scalatest.matchers.ShouldMatchers
 
+import inference._
+
 /**
  * Adopted from an example in "Embedded probabilistic programming" by
  * Oleg Kiselyov and Chung-chieh Shan (in proceedings of the IFIP

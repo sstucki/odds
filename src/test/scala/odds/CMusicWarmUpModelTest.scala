@@ -3,6 +3,8 @@ package odds
 import org.scalatest.FlatSpec
 import org.scalatest.matchers.ShouldMatchers
 
+import inference._
+
 trait CListOddsLang extends OddsLang {
 
   import probMonad.ToScalaMonadic
@@ -75,7 +77,6 @@ trait CListOddsLang extends OddsLang {
 trait CMusicWarmUpModel extends CListOddsLang with Notes {
 
   import probMonad.ToScalaMonadic
-
 
   // Note Transformations
 

@@ -2,6 +2,8 @@ package odds
 
 import org.scalatest.FlatSpec
 
+import inference._
+
 trait TrafficModel extends OddsLang {
   val lightsIt = Iterator("Red", "Yellow", "Green")
   val actionIt = Iterator("Stop", "Drive")

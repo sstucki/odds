@@ -20,6 +20,8 @@ package odds
 import org.scalatest.FlatSpec
 import org.scalatest.matchers.ShouldMatchers
 
+import inference._
+
 trait ColoredBallsModel extends OddsLang {
 
   import probMonad.ToScalaMonadic

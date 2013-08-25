@@ -2,6 +2,8 @@ package odds
 
 import org.scalatest.FlatSpec
 
+import inference._
+
 // Translated from
 // http://okmij.org/ftp/kakuritu/index.html#music
 // http://okmij.org/ftp/kakuritu/music2.ml

@@ -1,11 +1,12 @@
 package odds
+package inference
 
 /** Simple, exact inference for the ODDS language. */
 trait ExactInference extends DelayedChoiceIntf {
   this: OddsLang =>
 
   /** Concrete probability monad type class. */
-  object probMonad extends DelayedChoiceMonad
+  implicit object probMonad extends DelayedChoiceMonad
 
   /**
    * Reify a random variable representing a probabilistic computation.

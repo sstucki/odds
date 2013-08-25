@@ -3,6 +3,8 @@ package odds
 import org.scalatest.FlatSpec
 import org.scalatest.matchers.ShouldMatchers
 
+import inference._
+
 class CoinModelTest
     extends OddsLang
     with ExactInference

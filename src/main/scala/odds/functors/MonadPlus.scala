@@ -181,7 +181,7 @@ trait MonadPlus[M[+A]] {
   /** Implicit view as a Scala collection. */
   implicit final class ToScalaMonadic[+A](mx: M[A]) {
 
-    @inline def ++[B >: A](my: M[B]): M[B] = plus(mx, my)
+    //@inline def ++[B >: A](my: M[B]): M[B] = plus(mx, my)
     @inline def map[B](f: A => B): M[B] = fmap(f)(mx)
     @inline def filter(p: A => Boolean): M[A] = bind { x: A =>
       if (p(x)) unit(x) else zero
@@ -194,7 +194,7 @@ trait MonadPlus[M[+A]] {
 
     /** View for `withFilter` method. */
     final class WithFilter(p: A => Boolean) {
-      @inline def ++[B >: A](my: M[B]): M[B] = plus(mx filter p, my)
+      //@inline def ++[B >: A](my: M[B]): M[B] = plus(mx filter p, my)
       @inline def map[B](f: A => B): M[B] = fmap(f)(mx filter p)
       @inline def flatMap[B](f: A => M[B]): M[B] = bind(f)(mx filter p)
       @inline def foreach[U](f: A => U): Unit = fmap(f)(mx filter p)

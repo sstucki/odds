@@ -3,6 +3,8 @@ package odds
 import org.scalatest.FlatSpec
 import org.scalatest.matchers.ShouldMatchers
 
+import inference._
+
 class RejectionSamplingTest
     extends OddsLang
     with RejectionSampling

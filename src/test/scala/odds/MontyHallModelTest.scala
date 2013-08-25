@@ -3,6 +3,8 @@ package odds
 import org.scalatest.FlatSpec
 import org.scalatest.matchers.ShouldMatchers
 
+import inference._
+
 trait MontyHallModel extends OddsLang {
 
   import probMonad.ToScalaMonadic

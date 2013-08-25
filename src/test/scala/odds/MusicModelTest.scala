@@ -2,6 +2,8 @@ package odds
 
 import org.scalatest.FlatSpec
 
+import inference._
+
 // Translated from
 // http://okmij.org/ftp/kakuritu/index.html#music
 // http://okmij.org/ftp/kakuritu/music2.ml
@@ -13,12 +15,6 @@ trait ListOddsLang extends OddsLang {
   // Lazy Lists
   def infix_uniformSplit[A](s: List[A]): Rand[(List[A], List[A])] =
     for (i <- uniform(0 to s.length : _*)) yield s.splitAt(i)
-  def infix_tail[A](rs: Rand[List[A]]): Rand[List[A]] =
-    for (s <- rs) yield s.tail
-  def infix_head[A](rs: Rand[List[A]]): Rand[A] =
-    for (s <- rs) yield s.head
-  def infix_length[A](rs: Rand[List[A]]): Rand[Int] =
-    for (s <- rs) yield s.length
 
   def nil[A]: Rand[List[A]] = always(Nil.toList)
   type PTransform[A] = List[A] => Rand[List[A]]
@@ -26,11 +22,6 @@ trait ListOddsLang extends OddsLang {
     if (x.isEmpty) nil else
     lmap(f)(x.tail).flatMap(xs => f(x.head).map(h => h :: xs))
   }
-  def lappend[A](xs: Rand[List[A]], ys: Rand[List[A]]): Rand[List[A]] =
-    xs flatMap { x =>
-      if (x.isEmpty) ys else
-      lappend(always(x.tail), ys).map(zs => x.head :: zs)
-    }
 }
 
 trait MusicModel extends ListOddsLang with Notes {
@@ -98,7 +89,7 @@ trait MusicModel extends ListOddsLang with Notes {
         f1 <- choose_op();
         f2 <- choose_op();
         s <- input.uniformSplit;
-        r <- lappend(f1(s._1), f2(s._2)))
+        r <- f1(s._1) ::: f2(s._2))
       yield r
     }
 

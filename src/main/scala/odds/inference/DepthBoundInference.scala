@@ -1,4 +1,5 @@
 package odds
+package inference
 
 /**
  * Depth-bound inference for the ODDS language.
@@ -11,7 +12,7 @@ trait DepthBoundInference extends DelayedChoiceIntf {
   this: OddsLang =>
 
   /** Concrete probability monad type class. */
-  object probMonad extends DelayedChoiceMonad
+  implicit object probMonad extends DelayedChoiceMonad
 
   /**
    * Reify a random variable representing a probabilistic computation.

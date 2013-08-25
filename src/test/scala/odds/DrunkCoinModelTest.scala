@@ -3,6 +3,8 @@ package odds
 import org.scalatest.FlatSpec
 import org.scalatest.matchers.ShouldMatchers
 
+import inference._
+
 trait DrunkCoinModel extends OddsLang {
 
   import probMonad.ToScalaMonadic
@@ -10,6 +12,8 @@ trait DrunkCoinModel extends OddsLang {
   def drunkCoin: Rand[Boolean] = {
     val toss = flip(0.5)
     val lost = flip(0.9)
+    val x = toss <= toss
+    val y = toss ^ true
     lost flatMap {
       case true  => never
       case false => toss
