@@ -13,7 +13,6 @@ trait ProbMonad[M[+A], D[+A]] extends MonadPlus[M] {
 
   /** Make a probabilistic choice. */
   def choose[A](xs: Dist[A]): M[A]
-
 }
 
 /**

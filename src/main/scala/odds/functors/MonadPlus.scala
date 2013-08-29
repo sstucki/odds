@@ -11,13 +11,13 @@ package functors
  * Implementations of the methods in [[MonadPlus]] should fulfill the
  * following laws (for some equivalence relation `==`):
  * {{{
- *   fmap id                     ==  id
- *   fmap (g compose f)          ==  fmap(g) compose fmap(g)
+ *   fmap(id)                    ==  id
+ *   fmap(g compose f)           ==  fmap(g) compose fmap(f)
  *
  *   unit compose f              ==  fmap(f) compose unit
  *   join compose fmap(fmap(f))  ==  fmap(f) compose join
  *
- *   join compose fmap(unit)     ==  join compose unit   ≅  id
+ *   join compose fmap(unit)     ==  join compose unit   ==  id
  *   join compose fmap(join)     ==  join compose join
  * }}}
  *
@@ -34,7 +34,7 @@ package functors
  * which can easily be derived from the above laws and the following
  * additional equivalence characterizing monadic extension.
  * {{{
- *   bind  ==  join compose fmap
+ *   bind(f)  ==  join compose fmap(f)
  * }}}
  *
  * ===Monoidal laws===
@@ -51,14 +51,14 @@ package functors
  * Functions `M[A] => M[B]` between instances are monoid
  * homomorphisms, and should conform to the corresponding laws:
  * {{{
- *   f(zero)        ==  mzero
+ *   f(zero)        ==  zero
  *   f(mx plus my)  ==  f(mx) plus f(my)
  * }}}
  * In particular, this implies the following derived laws for
  * functions `A => M[B]` (that is, Kleisli morphisms):
  * {{{
- *   bind(f)(mzero)        ==  mzero
- *   bind(x => mzero)(mx)  ==  mzero
+ *   bind(f)(zero)         ==  zero
+ *   bind(x => zero)(mx)   ==  zero
  *   bind(f)(mx plus my)   ==  bind(f)(mx) plus bind(f)(my)
  * }}}
  *
@@ -147,7 +147,7 @@ trait MonadPlus[M[+A]] {
    * to the Kleisli composition `g * f` of two morphisms `f: X -> M Y`
    * and `g: Y -> M Z` as follows: `bind(g) . f = g * f`.
    */
-  def bind[A, B](f: A => M[B])(mx: M[A]): M[B] = join(fmap(f)(mx))
+  @inline def bind[A, B](f: A => M[B])(mx: M[A]): M[B] = join(fmap(f)(mx))
 
   /**
    * Monoidal unit (monadic 'zero').
