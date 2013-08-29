@@ -43,6 +43,6 @@ private object RandMacroOps {
   def +[R](c: Context)(that: c.Expr[Any])(
     implicit rt: c.WeakTypeTag[R]): c.Expr[R] = {
     import c.universe._
-    c.Expr(liftApply(c)(q"${c.prefix.tree}.+(${that.tree})", rt.tpe))
+    c.Expr(lift(c)(q"${c.prefix.tree}.+(${that.tree})", rt.tpe))
   }
 }

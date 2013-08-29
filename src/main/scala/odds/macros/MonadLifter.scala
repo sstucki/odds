@@ -2,14 +2,13 @@ package odds
 package macros
 
 import language.experimental.macros
-import language.dynamics
 
 import reflect.macros.Context
 
 import functors.MonadPlus
 
 /**
- * Auto-lifter for deterministic methods.
+ * Auto-lifter for [[MonadPlus]].
  *
  * This trait implements dynamic macros (aka "Poor man's type macros")
  * to lift methods defined in a class `A` into the monadic domain of a
@@ -93,19 +92,20 @@ object MonadLifter {
     import c.universe._
     class Dummy[+A]
     val monadPlusCons = weakTypeOf[MonadPlus[Dummy]].typeConstructor
-    println(appliedType(monadPlusCons, List(monad.typeConstructor)))
+
     c.inferImplicitValue(
       appliedType(monadPlusCons, List(monad.typeConstructor)), false)
   }
 
   /** Lift a method/function call into the monadic domain. */
-  def liftApply(c: Context)(call: c.universe.Apply, monad: c.Type): c.Tree = {
+  def lift(c: Context)(call: c.Tree, monad: c.Type): c.Tree = {
     import c.universe._
 
-    val Apply(calleeAndTargs, args0) = call
-    val (callee, targs) = calleeAndTargs match {
-      case TypeApply(c, tas) => (c,              tas)
-      case _                 => (calleeAndTargs, Nil)
+    val (callee, args0, targs) = call match {
+      case Apply(TypeApply(c, tas), as) => (c, as,  tas)
+      case Apply(c, as)                 => (c, as,  Nil)
+      case TypeApply(c, tas)            => (c, Nil, tas)
+      case c                            => (c, Nil, Nil)
     }
     val (mtd, args) = callee match {
       case Select(q, n) => (Some(n), q :: args0)
@@ -147,12 +147,16 @@ object MonadLifter {
       else Apply(nCalleeAndTypes, nMtdArgs)   // Application
 
     val monadClassInst = getMonadClassInst(c)(monad)
-    val (atype1, aterm1, aname1) = bindArgs.head
-    val fmap =
-      q"$monadClassInst.fmap{($aname1: $atype1) => $nCall}($aterm1)"
-    (bindArgs.tail :\ fmap) {
-      case ((atype, aterm, aname), b) =>
-        q"$monadClassInst.bind{($aname: $atype) => $b}($aterm)"
+    if (bindArgs.isEmpty) {                   // No arguments to lift
+      q"$monadClassInst.unit{$nCall}"
+    } else {                                  // Lift arguments
+      val (atype1, aterm1, aname1) = bindArgs.head
+      val fmap =
+        q"$monadClassInst.fmap{($aname1: $atype1) => $nCall}($aterm1)"
+      (bindArgs.tail :\ fmap) {
+        case ((atype, aterm, aname), b) =>
+          q"$monadClassInst.bind{($aname: $atype) => $b}($aterm)"
+      }
     }
   }
 
@@ -171,8 +175,10 @@ object MonadLifter {
         if (targs.tail.isEmpty) q"$rterm.$mtd(..$args)"
         else q"$rterm.$mtd[..${targs.tail}](..$args)"
 
-      c.Expr(liftApply(c)(ap, targs.head))
+      c.Expr(lift(c)(ap, targs.head))
     }
+
+    // FIMXE: Implement handler for `applyDynamicNamed` calls.
 
     /** Handler for `selectDynamic` calls. */
     override def selectDynamic[M](c: Context)(name: String)(
@@ -183,10 +189,10 @@ object MonadLifter {
       val Ident(member) = c.parse(name)
       val rterm = c.prefix.tree
       val ap =
-        if (targs.tail.isEmpty) q"$rterm.$member()"
-        else q"$rterm.$member[..${targs.tail}]()"
+        if (targs.tail.isEmpty) q"$rterm.$member"
+        else q"$rterm.$member[..${targs.tail}]"
 
-      c.Expr(liftApply(c)(ap, targs.head))
+      c.Expr(lift(c)(ap, targs.head))
     }
   }
 }
