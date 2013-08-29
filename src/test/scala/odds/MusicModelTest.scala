@@ -62,7 +62,8 @@ trait MusicModel extends ListOddsLang with Notes {
   val transpose7 = transpose(List(0.1, 0.5, 0.4), 9)
 
   def maptranspose(t: Note => Rand[Note]): PTransform[Note] =
-    l => lmap(t)(l).flatMap(transform)
+    { (l: List[Note]) => (l.map(t): Rand[List[Note]]) } andThen
+      probMonad.bind(transform)  // FIXME!
   // the main transformation
   def maptranspose2 = maptranspose(transpose2)
   def maptranspose3 = maptranspose(transpose3)
@@ -84,13 +85,15 @@ trait MusicModel extends ListOddsLang with Notes {
       maptranspose7 -> 0.1)
   def transform(x: List[Note]): Rand[List[Note]] =
     if (x.isEmpty) nil else {
-      for (
-        input <- always(x);
-        f1 <- choose_op();
-        f2 <- choose_op();
-        s <- input.uniformSplit;
-        r <- f1(s._1) ::: f2(s._2))
-      yield r
+      val f1 = choose_op();
+      val f2 = choose_op();
+      val s = x.uniformSplit;
+      //f1(s._1) ::: f2(s._2)  // FIXME: SI-7777 ?
+      val s1 = s._1
+      val s2 = s._2
+      val fs1 = f1(s1)
+      val fs2 = f1(s2)
+      fs1 ::: fs1
     }
 
   def driver(src: List[Note], dst: List[Note]) = {

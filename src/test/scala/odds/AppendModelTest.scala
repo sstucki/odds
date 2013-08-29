@@ -7,8 +7,6 @@ import inference._
 
 trait AppendModel extends OddsLang {
 
-  implicit def list2randList[A](l: List[A]): Rand[List[A]] = probMonad.unit(l)
-
   def randomList: Rand[List[Boolean]] =
     if (flip(0.5)) flip(0.5) :: randomList
     else always(Nil)

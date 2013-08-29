@@ -81,7 +81,7 @@ class CoffeeModelTest
     val coffeeModel1: Dist[String] = reify(
       uniform("A","B","C","D","E").flatMap {
         case ShouldGrabCoffee(y) => always(y)
-      }.flatMap{ x => x})
+      }.flatMap{ x => x })
     show(coffeeModel1, "coffeeModel1")
     coffeeModel1.toMap should equal {
       Map(
