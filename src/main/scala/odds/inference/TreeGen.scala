@@ -3,7 +3,7 @@ package inference
 
 /** Basic tree generator interface. */
 trait TreeGenIntf {
-  this: OddsLang =>
+  this: OddsIntf =>
 
   /** Tree class. */
   sealed abstract class Tree[+A] {
@@ -93,8 +93,8 @@ trait DelayedChoiceTreeGen extends TreeGenIntf with DelayedChoiceIntf {
 
     // Generate new IDs top-down for every generated tree
     var idCounter = 0
-    val newIdsMap = collection.mutable.Map[Long, String]()
-    def lookUpId(id: Long) = newIdsMap.getOrElse(id, {
+    val newIdsMap = collection.mutable.Map[CommittedChoice.Id, String]()
+    def lookUpId(id: CommittedChoice.Id) = newIdsMap.getOrElse(id, {
       idCounter += 1
       val n = idCounter.toString
       newIdsMap += ((id, n))

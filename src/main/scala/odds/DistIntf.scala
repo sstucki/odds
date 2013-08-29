@@ -46,6 +46,6 @@ trait DistIntf {
     def apply[A](xs: (A, Prob)*): Dist[A] = dist(xs: _*)
 
     /** Extract a sequence of value-weight pairs from a distribution. */
-    def unapplySeq[A](dm: Dist[A]) = Some(dm.toList)
+    def unapplySeq[A](d: Dist[A]) = Some(d.toSeq)
   }
 }

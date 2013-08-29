@@ -10,7 +10,7 @@ import scala.collection.mutable
  * Probabilistic Programming" by Oleg Kiselyov and Chung-chieh Shan.
  */
 trait LocalImportanceSampling extends DelayedChoiceIntf {
-  this: OddsLang =>
+  this: OddsIntf =>
 
   /** Concrete probability monad type class. */
   implicit object probMonad extends DelayedChoiceMonad
@@ -48,13 +48,13 @@ trait LocalImportanceSampling extends DelayedChoiceIntf {
     def lookAhead(r: ExploreRes[A], depth: Int): ExploreRes[A] =
       if (depth <= 0) r
       else {
-        val ExploreRes(sls, bts, _) = r
-        val z = ExploreRes(sls, dist())
+        val ExploreRes(sls, bts, i) = r
+        val z = ExploreRes(sls, dist(), i)
         (z /: bts) { (sb, tp) =>
           val (t, p) = tp
-          val ExploreRes(slsAcc, btsAcc, _) = sb
+          val ExploreRes(slsAcc, btsAcc, i) = sb
           val ExploreRes(sls, bts, _) = lookAhead(t(p), depth - 1)
-          ExploreRes(slsAcc ++ sls, btsAcc ++ bts)
+          ExploreRes(slsAcc ++ sls, btsAcc ++ bts, i)
         }
       }
 

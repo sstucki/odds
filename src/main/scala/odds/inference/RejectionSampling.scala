@@ -6,7 +6,7 @@ import scala.collection.mutable
 
 /** Simple, rejection sampler for the ODDS language. */
 trait RejectionSampling extends OddsIntf with DistMaps {
-  this: OddsLang =>
+  this: OddsIntf =>
 
   /** Concrete random variable type. */
   type Rand[+A] = RandVar[A]

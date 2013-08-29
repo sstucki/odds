@@ -9,7 +9,7 @@ package inference
  * defined by a probabilistic computation.
  */
 trait DepthBoundInference extends DelayedChoiceIntf {
-  this: OddsLang =>
+  this: OddsIntf =>
 
   /** Concrete probability monad type class. */
   implicit object probMonad extends DelayedChoiceMonad

@@ -1,52 +1,12 @@
 package odds
 
-import language.experimental.macros
 import language.implicitConversions
 
 
 /** Lifted logic and arithmetic operations. */
 trait OddsLang extends OddsIntf with EmbeddedControls {
 
-  import macros.MonadLifter
-  import macros.RandMacroOps
   import probMonad._
-
-  /** Refined abstract random variable type. */
-  type Rand[+A] <: RandIntf[A]
-
-  /**
-   * Generic operations on random variables.
-   *
-   * This trait provides the public interface of the [[Rand]] type.
-   * It must be extended by any concrete instance of the random
-   * variable type.
-   */
-  trait RandIntf[+A] extends MonadLifter[Rand] with RandMacroOps[Rand] {
-    this: Rand[A] =>
-
-    /**
-     * Condition this random variable on an observation.
-     *
-     * Use case:
-     *
-     * {{{
-     *     val coin1 = flip(0.5)
-     *     val coin2 = flip(0.5)
-     *     val both  = coin1 && coin2
-     *
-     *     // conditional probability: P(both | coin1) = P(coin2)
-     *     both when coin1
-     * }}}
-     *
-     * @param cond the observation (random variable) to condition on.
-     * @return the conditional probability of `this` given `cond`,
-     *         i.e. `P(this | that)`
-     */
-    def when(cond: Rand[Boolean]): Rand[A] = bind {
-      c: Boolean => if(c) this else never
-    } (cond)
-  }
-
 
   /**
    * Make a (discrete) probabilistic choice.
@@ -74,16 +34,26 @@ trait OddsLang extends OddsIntf with EmbeddedControls {
   @deprecated("use `choose` instead", "2013-08-19")
   @inline final def choice[A, M[A]](xs: (A, Prob)*) = choose(xs: _*)
 
-  @inline final def always[A](x: A) = unit(x)
+  @inline implicit final def always[A](x: A): Rand[A] = unit(x)
 
-  @inline final def never[A] = zero
+  @inline final def never[A]: Rand[A] = zero
 
-  def flip(p: Double): Rand[Boolean] = choose(true -> p, false -> (1-p))
+  @inline implicit final def flatten[A](mmx: Rand[Rand[A]]): Rand[A] =
+    join(mmx)
+
+  @inline def flip(p: Double): Rand[Boolean] =
+    choose(true -> p, false -> (1-p))
 
   def uniform[A](xs: A*): Rand[A] = if (xs.isEmpty) never else {
     val p = 1.0 / xs.size
     choice(xs.map((_, p)):_*)
   }
+
+  /** Condition a probabilistic choice on a Boolean random variable. */
+  @inline def cond[A](rx: => Rand[A], rc: Rand[Boolean]): Rand[A] = bind {
+    c: Boolean => if (c) rx else zero
+  } (rc)
+
 
   import probMonad.ToScalaMonadic
 
@@ -123,6 +93,19 @@ trait OddsLang extends OddsIntf with EmbeddedControls {
     case true => thenp
     case false => elsep
   }
+
+  /**
+   * Implicit conversion from lists of random variables to random
+   * lists.
+   *
+   * @todo: Can/should we make this more generic?  E.g. implicit
+   * conversions form `Traversable[Rand[A]]` to `Rand[Traversable[A]]`?
+   */
+  implicit def listRandToRandList[A](l: List[Rand[A]]): Rand[List[A]] =
+    l match {
+      case x :: xs => liftOp2(x, listRandToRandList(xs))(_ :: _)
+      case Nil => always(Nil)
+    }
 }
 
 

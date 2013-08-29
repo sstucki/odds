@@ -34,18 +34,21 @@ trait CommittedChoice[+A] {
 /** Companion object of the [[CommittedChoice]] class. */
 object CommittedChoice {
 
-  type Environment = scala.collection.immutable.Map[Long, Any];
+  /**
+   * Identifier class.
+   *
+   * The body of this class is intentionally left empty.  Checking two
+   * instances of this class for equality will return `false` unless
+   * they refer to the same object (reference equality).  Hence we can
+   * use instances of this class as unique identifiers.  The advantage
+   * of using this class over e.g. a counter, is that we don't have to
+   * explicitly synchronize `freshId` to guarantee thread safety (the
+   * synchronization is handled by the run-time system).
+   */
+  final class Id
 
-  /** Counter to generate new IDs for [[CommittedChoice]] instances. */
-  private[this] var _idCounter: Long = 0
-
-  /** Counter to generate new IDs for [[CommittedChoice]] instances. */
-  def idCounter = _idCounter
+  type Environment = scala.collection.immutable.Map[Id, Any];
 
   /** Generate a fresh ID for a [[CommittedChoice]] instances. */
-  def freshId: Long = {
-    val id = _idCounter
-    _idCounter += 1
-    id
-  }
+  def freshId: Id = new Id
 }
