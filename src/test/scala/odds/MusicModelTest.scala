@@ -63,7 +63,8 @@ trait MusicModel extends ListOddsLang with Notes {
 
   def maptranspose(t: Note => Rand[Note]): PTransform[Note] =
     { (l: List[Note]) => (l.map(t): Rand[List[Note]]) } andThen
-      probMonad.bind(transform)  // FIXME!
+      transform _
+
   // the main transformation
   def maptranspose2 = maptranspose(transpose2)
   def maptranspose3 = maptranspose(transpose3)

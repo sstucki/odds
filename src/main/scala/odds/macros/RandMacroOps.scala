@@ -31,7 +31,7 @@ trait RandMacroOps[R[+_]] {
    *
    * @param that the value that `this` should be added to.
    */
-  def +(that: Any): R[_] = macro RandMacroOps.+[R[_]]
+  def +(that: Any): R[Any] = macro RandMacroOps.+[R]
 }
 
 private object RandMacroOps {
@@ -40,9 +40,11 @@ private object RandMacroOps {
   import MonadLifter._
 
   /** Lift the addition of the prefix and `that` into `R[_]`. */
-  def +[R](c: Context)(that: c.Expr[Any])(
-    implicit rt: c.WeakTypeTag[R]): c.Expr[R] = {
+  def +[R[+_]](c: Context)(that: c.Expr[Any])(
+    implicit rt: c.WeakTypeTag[R[_]]): c.Expr[R[Any]] = {
     import c.universe._
-    c.Expr(lift(c)(q"${c.prefix.tree}.+(${that.tree})", rt.tpe))
+    val lb = new LifterBundle[c.type](c) { val monad = rt.tpe }
+    val args = List(c.prefix.tree, that.tree).map(a => (a, a.tpe))
+    c.Expr(lb.lift(newTermName("$plus"), args, Nil, weakTypeOf[R[Any]]))
   }
 }

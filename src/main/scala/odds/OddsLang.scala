@@ -2,7 +2,6 @@ package odds
 
 import language.implicitConversions
 
-
 /** Lifted logic and arithmetic operations. */
 trait OddsLang extends OddsIntf with EmbeddedControls {
 
@@ -55,38 +54,31 @@ trait OddsLang extends OddsIntf with EmbeddedControls {
   } (rc)
 
 
-  import probMonad.ToScalaMonadic
+  // -- Lifted function applications --
+  implicit def liftFun1Fmap[A, B](f: A => B): Rand[A] => Rand[B] =
+    fmap(f) _
+  implicit def liftFun1Bind[A, B](f: A => Rand[B]): Rand[A] => Rand[B] =
+    bind(f) _
 
-  def liftOp2[A, B, C](x: Rand[A], y: Rand[B])(f: (A, B) => C): Rand[C] =
-    for (a <- x; b <- y) yield f(a, b)
 
-  // -- Lifted tuple constructors --
-  implicit def make_tuple2[T1, T2](t: (Rand[T1], Rand[T2])): Rand[(T1, T2)] =
-    liftOp2(t._1, t._2)((_, _))
-  def tuple2_get1[T](t: Rand[(T, _)]) : Rand[T] = t.map(_._1)
-  def tuple2_get2[T](t: Rand[(_, T)]) : Rand[T] = t.map(_._2)
+  // -- Lifted tuple/case class construction --
+  type RandProduct[P <: Product] = macros.MonadicProduct[Rand, P]
+  implicit def prodToRandProd[P <: Product](p: P)(
+    implicit rp: RandProduct[P]) = rp.lift(p)
 
-  implicit def make_tuple3[T1, T2, T3](
-    t: (Rand[T1], Rand[T2], Rand[T3])): Rand[(T1, T2, T3)] =
-    for (t1 <- t._1; t2 <- t._2; t3 <- t._3) yield (t1, t2, t3)
-  def tuple3_get1[T](t: Rand[(T, _, _)]) : Rand[T] = t.map(_._1)
-  def tuple3_get2[T](t: Rand[(_, T, _)]) : Rand[T] = t.map(_._2)
-  def tuple3_get3[T](t: Rand[(_, _, T)]) : Rand[T] = t.map(_._3)
 
   // -- Lifted logic operations/relations --
   def infix_&&(x: Rand[Boolean], y: => Rand[Boolean]): Rand[Boolean] =
-    x flatMap (if (_) y else always(false))
+    bind { c: Boolean => if (c) y else always(false) } (x)
   def infix_||(x: Rand[Boolean], y: => Rand[Boolean]): Rand[Boolean] =
-    x flatMap (if (_) always(true) else y)
-  //def __equals[T](x: Rand[T], y: Rand[T]): Rand[Boolean] = // FIXME!
-  //  liftOp2(x,y)(_ == _)
-  def infix_===[T](x: Rand[T], y: Rand[T]): Rand[Boolean] =
-    liftOp2(x, y)(_ == _)
-  def infix_!=[T](x: Rand[T], y: Rand[T]): Rand[Boolean] =
-    liftOp2(x, y)(_ != _)
+    bind { c: Boolean => if (c) always(true) else y } (x)
+  def __equal[T](x: Rand[T], y: Rand[T]): Rand[Boolean] = x.__equals(y)
+  def infix_===[T](x: Rand[T], y: Rand[T]): Rand[Boolean] = x.__==(y)
+  def infix_!=[T](x: Rand[T], y: Rand[T]): Rand[Boolean] = x.__!=(y)
 
   def __ifThenElse[T](cond: Rand[Boolean], tb: => Rand[T], fb: => Rand[T]) =
     cond flatMap { case true => tb; case false => fb }
+
 
   // HACK -- bug in scala-virtualized
   override def __ifThenElse[T](cond: =>Boolean, thenp: => T, elsep: => T) = cond match {
@@ -103,8 +95,10 @@ trait OddsLang extends OddsIntf with EmbeddedControls {
    */
   implicit def listRandToRandList[A](l: List[Rand[A]]): Rand[List[A]] =
     l match {
-      case x :: xs => liftOp2(x, listRandToRandList(xs))(_ :: _)
-      case Nil => always(Nil)
+      case rx :: rxs => bind { x: A =>
+        fmap { xs: List[A] => x :: xs } (listRandToRandList(rxs))
+      } (rx)
+      case Nil => unit(Nil)
     }
 }
 
