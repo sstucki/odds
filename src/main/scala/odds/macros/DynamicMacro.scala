@@ -13,10 +13,10 @@ import reflect.macros.Context
  * This is the base trait for implementing dynamic macros, also know
  * as "Poor man's type macros".
  *
- * @TODO: Is there a less awful way to handle type parameter lists of
- * various lengths?
+ * @todo Is there a less awful way to handle type parameter lists of
+ *   various lengths?
  *
- * FIXME: SI-7776 prevents implementation of type parameters.
+ * @todo FIXME: SI-7776 prevents implementation of type parameters.
  */
 trait DynamicMacro[R] extends Dynamic {
 

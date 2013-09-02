@@ -8,7 +8,7 @@ import reflect.macros.Context
 import functors.MonadPlus
 
 /**
- * Auto-lifter for [[MonadPlus]].
+ * Auto-lifter for [[functors.MonadPlus]].
  *
  * This trait implements dynamic macros (aka "Poor man's type macros")
  * to lift methods defined in a class `A` into the monadic domain of a
@@ -31,7 +31,7 @@ import functors.MonadPlus
  * using the monadic operations `bind` and `fmap` provided by the
  * monad instance corresponding to `M`.
  *
- * FIXME: SI-7776 prevents implementation of type parameters.
+ * @todo FIXME: SI-7776 prevents implementation of type parameters.
  */
 trait MonadLifter[M[+_]] extends DynamicMacro[M[_]] {
 
@@ -282,7 +282,18 @@ object MonadLifter {
 }
 
 
-/** Type class for lifting products into the monad domain. */
+/**
+ * Type class for lifting products into the monadic domain.
+ *
+ * ==For categorists==
+ * This type class essentially represents the ''strength'' (and
+ * ''costrength'') of the monad `M`, in that it allows lifting
+ * products `(A, M[B])` to `M[(A, B)]`.  It also covers the
+ * generalized case for finite products.
+ *
+ * @tparam M the monad type.
+ * @tparam P the product type before lifting.
+ */
 trait MonadicProduct[M[+_], P <: Product] {
 
   /**
@@ -374,9 +385,6 @@ object MonadicProduct {
      * given monad and product type.
      */
     def materialize: c.Expr[MonadicProduct[M, P]] = {
-
-      println(c.enclosingPosition.lineContent)
-      println(" " * c.enclosingPosition.column + "^")
 
       // If this product type is not a case class, fall back to trivial
       // lifting (i.e. through the monadic `unit` operation).

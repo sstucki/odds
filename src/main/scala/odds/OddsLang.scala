@@ -90,8 +90,9 @@ trait OddsLang extends OddsIntf with EmbeddedControls {
    * Implicit conversion from lists of random variables to random
    * lists.
    *
-   * @todo: Can/should we make this more generic?  E.g. implicit
-   * conversions form `Traversable[Rand[A]]` to `Rand[Traversable[A]]`?
+   * @todo Can/should we make this more generic?  E.g. implicit
+   *   conversions form `Traversable[Rand[A]]` to
+   *   `Rand[Traversable[A]]`?
    */
   implicit def listRandToRandList[A](l: List[Rand[A]]): Rand[List[A]] =
     l match {

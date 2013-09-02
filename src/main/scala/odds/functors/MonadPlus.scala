@@ -108,11 +108,11 @@ trait MonadPlus[M[+A]] {
    * Monadic unit.
    *
    * ==For functional programmers==
-   * This is the monadic 'unit' (or 'return') operation.  In the Scala
-   * collection API, this corresponds to `M(x)` (i.e. passing a single
-   * argument to the `apply` method of the companion object).  In
-   * Haskell it corresponds to the `return` operation of the `Monad`
-   * class.
+   * This is the monadic ''unit'' (or ''return'') operation.  In the
+   * Scala collection API, this corresponds to `M(x)` (i.e. passing a
+   * single argument to the `apply` method of the companion object).
+   * In Haskell it corresponds to the `return` operation of the
+   * `Monad` class.
    *
    * ==For categorists==
    * This corresponds to a natural transformation `unit: I => M` from
@@ -124,7 +124,7 @@ trait MonadPlus[M[+A]] {
    * Monadic multiplication.
    *
    * ==For functional programmers==
-   * This is monadic 'join' operation.  In the Scala collection API,
+   * This is monadic ''join'' operation.  In the Scala collection API,
    * this corresponds to `flatten` method of `F`.  In Haskell it
    * corresponds to the `join` operation of the `Monad` class.
    *
@@ -138,7 +138,7 @@ trait MonadPlus[M[+A]] {
    * Monadic bind (extension).
    *
    * ==For functional programmers==
-   * This is monadic 'bind' operation.  In the Scala collection API,
+   * This is monadic ''bind'' operation.  In the Scala collection API,
    * this corresponds to `flatMap` method of `F`.  In Haskell it
    * corresponds to the `(>>=)` operation of the `Monad` class.
    *
@@ -150,14 +150,14 @@ trait MonadPlus[M[+A]] {
   @inline def bind[A, B](f: A => M[B])(mx: M[A]): M[B] = join(fmap(f)(mx))
 
   /**
-   * Monoidal unit (monadic 'zero').
+   * Monoidal unit (monadic ''zero'').
    *
    * ==For functional programmers==
-   * This is the monadic 'zero'.  In the Scala collection API, this
+   * This is the monadic ''zero''.  In the Scala collection API, this
    * corresponds to, an empty collection, i.e. `M.empty` or the `M()`
    * (calling the `apply` method of the companion object without an
-   * argument).  In Haskell it corresponds to the `zero` operation
-   * of the `MonadPlus` class.
+   * argument).  In Haskell it corresponds to the `zero` operation of
+   * the `MonadPlus` class.
    *
    * ==For categorists==
    * This corresponds the identity of the Monoid `M A`.
@@ -165,10 +165,10 @@ trait MonadPlus[M[+A]] {
   def zero[A]: M[A]
 
   /**
-   * Monoidal tensor product (monadic 'plus').
+   * Monoidal tensor product (monadic ''plus'').
    *
    * ==For functional programmers==
-   * This is the monadic 'plus' operation.  In the Scala collection
+   * This is the monadic ''plus'' operation.  In the Scala collection
    * API, this corresponds to the `++` or `orElse` method of `M`.  In
    * Haskell it corresponds to the `plus` operation of the `MonadPlus`
    * class.
