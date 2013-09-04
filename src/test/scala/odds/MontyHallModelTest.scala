@@ -7,7 +7,7 @@ import inference._
 
 trait MontyHallModel extends OddsLang {
 
-  import probMonad.ToScalaMonadic
+  import Rand.ToScalaMonadic
 
   def randomDoor = uniform(1, 2, 3)
 
@@ -33,7 +33,7 @@ trait MontyHallModel extends OddsLang {
 
 trait MontyHallMonadicModel extends OddsLang {
 
-  import probMonad.ToScalaMonadic
+  import Rand.ToScalaMonadic
 
   def randomDoor = uniform(1, 2, 3)
 

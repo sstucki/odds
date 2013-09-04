@@ -5,7 +5,7 @@ import language.implicitConversions
 /** Lifted logic and arithmetic operations. */
 trait OddsLang extends OddsIntf with EmbeddedControls {
 
-  import probMonad._
+  import Rand._
 
   /**
    * Make a (discrete) probabilistic choice.
@@ -17,7 +17,7 @@ trait OddsLang extends OddsIntf with EmbeddedControls {
    * @return a random variable representing the outcome of the choice.
    */
   @inline final def choose[A](xs: (A, Prob)*): Rand[A] =
-    probMonad.choose(Dist(xs: _*))
+    Rand.choose(Dist(xs: _*))
 
   /**
    * Make a probabilistic choice.
@@ -27,7 +27,7 @@ trait OddsLang extends OddsIntf with EmbeddedControls {
    * @param xs A distribution to chose from.
    * @return a random variable representing the outcome of the choice.
    */
-  @inline final def choose[A](xs: Dist[A]): Rand[A] = probMonad.choose(xs)
+  @inline final def choose[A](xs: Dist[A]): Rand[A] = Rand.choose(xs)
 
   /** Make a (discrete) probabilistic choice. */
   @deprecated("use `choose` instead", "2013-08-19")

@@ -17,7 +17,7 @@ trait TrafficModel extends OddsLang {
   type Action = String
   type Driver = Rand[Light] => Rand[Action]
 
-  import probMonad.ToScalaMonadic
+  import Rand.ToScalaMonadic
 
   val trafficLight = choice(Red -> 0.5, Yellow -> 0.1, Green -> 0.4)
   //dbg "light"

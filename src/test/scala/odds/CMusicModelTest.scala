@@ -10,7 +10,7 @@ import inference._
 
 trait CMusicModel extends CListOddsLang with Notes {
 
-  import probMonad.ToScalaMonadic
+  import Rand.ToScalaMonadic
 
   val octave = List(
     A, Asharp, B, C, Csharp, D, Dsharp, E, F, Fsharp, G, Gsharp,

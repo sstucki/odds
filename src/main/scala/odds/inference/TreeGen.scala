@@ -81,7 +81,7 @@ trait DelayedChoiceTreeGen extends TreeGenIntf with DelayedChoiceIntf {
   this: OddsLang =>
 
   /** Concrete probability monad type class. */
-  implicit object probMonad extends DelayedChoiceMonad
+  implicit object Rand extends DelayedChoiceMonad
 
   /**
    * Reify a random variable representing a probabilistic computation

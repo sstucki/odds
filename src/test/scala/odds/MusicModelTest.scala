@@ -10,7 +10,7 @@ import inference._
 
 trait ListOddsLang extends OddsLang {
 
-  import probMonad.ToScalaMonadic
+  import Rand.ToScalaMonadic
 
   // Lazy Lists
   def infix_uniformSplit[A](s: List[A]): Rand[(List[A], List[A])] =
@@ -26,7 +26,7 @@ trait ListOddsLang extends OddsLang {
 
 trait MusicModel extends ListOddsLang with Notes {
 
-  import probMonad.ToScalaMonadic
+  import Rand.ToScalaMonadic
 
   val octave = List(
     A, Asharp, B, C, Csharp, D, Dsharp, E, F, Fsharp, G, Gsharp,

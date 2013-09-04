@@ -48,7 +48,7 @@ trait DelayedChoiceIntf extends OddsIntf with DistMaps {
    * probability monad use in all inference algorithms based on
    * delayed evaluation.
    */
-  trait DelayedChoiceMonad extends ProbMonad[Rand, Dist] {
+  trait DelayedChoiceMonad extends RandInternalIntf {
 
     // It is tempting to think we could use the monad laws to
     // simplify/normalize some trees built for the corresponding
@@ -221,7 +221,4 @@ trait DelayedChoiceIntf extends OddsIntf with DistMaps {
       (y, q, e) => (Left(y) -> q)
     })
   }
-}
-
-object DelayedChoiceMonad extends DistMaps {
 }

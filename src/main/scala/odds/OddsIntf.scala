@@ -42,38 +42,53 @@ trait OddsIntf extends DistIntf {
      * @return the conditional probability of `this` given `cond`,
      *         i.e. `P(this | cond)`
      */
-    def when(cond: Rand[Boolean]): Rand[A] = probMonad.bind {
-      c: Boolean => if (c) this else probMonad.zero
+    def when(cond: Rand[Boolean]): Rand[A] = Rand.bind {
+      c: Boolean => if (c) this else Rand.zero
     } (cond)
 
     /** Compare two random variables for equality. */
-    def __equals[B](that: Rand[B]): Rand[Boolean] = probMonad.bind { x: A =>
-      probMonad.fmap { y: B =>
+    def __equals[B](that: Rand[B]): Rand[Boolean] = Rand.bind { x: A =>
+      Rand.fmap { y: B =>
         x.equals(y)
       }(that)
     }(this)
 
     /** Compare two random variables for equality. */
-    def __==[B](that: Rand[B]): Rand[Boolean] = probMonad.bind { x: A =>
-      probMonad.fmap { y: B =>
+    def __==[B](that: Rand[B]): Rand[Boolean] = Rand.bind { x: A =>
+      Rand.fmap { y: B =>
         x.==(y)
       }(that)
     }(this)
 
     /** Compare two random variables for inequality. */
-    def __!=[B](that: Rand[B]): Rand[Boolean] = probMonad.bind { x: A =>
-      probMonad.fmap { y: B =>
+    def __!=[B](that: Rand[B]): Rand[Boolean] = Rand.bind { x: A =>
+      Rand.fmap { y: B =>
         x.!=(y)
       }(that)
     }(this)
   }
 
   /**
-   * Abstract type class instance for `Rand` type.
+   * Internal interface of the probability monad.
+   *
+   * This is the type class of the probability monad used by a
+   * particular inference algorithm.
+   */
+  trait RandInternalIntf extends ProbMonad[Rand, Dist] {
+
+    /**
+     * Factory method for creating a unit instance of type `Rand[A]`
+     * from a value of type `A`.
+     */
+    def apply[A](x: A): Rand[A] = unit(x)
+  }
+
+  /**
+   * Abstract type class instance for the `Rand` type.
    *
    * This type class provides the internal interface of the
    * probability monad.  Any inference algorithm must be provided a
    * concrete instance of it.
    */
-  implicit val probMonad: ProbMonad[Rand, Dist]
+  implicit val Rand: RandInternalIntf
 }

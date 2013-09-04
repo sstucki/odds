@@ -7,7 +7,7 @@ import inference._
 
 trait DrunkCoinModel extends OddsLang {
 
-  import probMonad.ToScalaMonadic
+  import Rand.ToScalaMonadic
 
   def drunkCoin: Rand[Boolean] = {
     val toss = flip(0.5)

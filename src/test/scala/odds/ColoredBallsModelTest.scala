@@ -24,7 +24,7 @@ import inference._
 
 trait ColoredBallsModel extends OddsLang {
 
-  import probMonad.ToScalaMonadic
+  import Rand.ToScalaMonadic
 
   def forall[A](obs: IndexedSeq[A], p: A => Rand[Boolean]) = {
     def check(i: Int): Rand[Boolean] =

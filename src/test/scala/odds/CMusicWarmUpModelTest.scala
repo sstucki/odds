@@ -7,7 +7,7 @@ import inference._
 
 trait CListOddsLang extends OddsLang {
 
-  import probMonad.ToScalaMonadic
+  import Rand.ToScalaMonadic
 
   // A list where the tail itself is a random var.
   sealed abstract class CList[+A] {
@@ -76,7 +76,7 @@ trait CListOddsLang extends OddsLang {
 
 trait CMusicWarmUpModel extends CListOddsLang with Notes {
 
-  import probMonad.ToScalaMonadic
+  import Rand.ToScalaMonadic
 
   // Note Transformations
 

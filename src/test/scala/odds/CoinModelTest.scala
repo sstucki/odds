@@ -12,7 +12,7 @@ class CoinModelTest
     with FlatSpec
     with ShouldMatchers {
 
-  import probMonad.ToScalaMonadic
+  import Rand.ToScalaMonadic
 
   behavior of "ExactInference"
 

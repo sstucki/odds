@@ -10,7 +10,7 @@ import inference._
 
 trait CoffeeModel extends OddsLang {
 
-  import probMonad.ToScalaMonadic
+  import Rand.ToScalaMonadic
 
   object __match {
     def one[T](x: T): Rand[T] = always(x)
@@ -77,7 +77,7 @@ class CoffeeModelTest
   behavior of "CoffeeModel"
 
   it should "show the coffeeModel" in {
-    import probMonad.ToScalaMonadic
+    import Rand.ToScalaMonadic
     val coffeeModel1: Dist[String] = reify(
       uniform("A","B","C","D","E").flatMap {
         case ShouldGrabCoffee(y) => always(y)

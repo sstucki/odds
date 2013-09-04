@@ -12,7 +12,7 @@ trait DepthBoundInference extends DelayedChoiceIntf {
   this: OddsIntf =>
 
   /** Concrete probability monad type class. */
-  implicit object probMonad extends DelayedChoiceMonad
+  implicit object Rand extends DelayedChoiceMonad
 
   /**
    * Reify a random variable representing a probabilistic computation.

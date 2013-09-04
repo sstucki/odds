@@ -28,7 +28,7 @@ import inference._
  */
 trait GrassModel extends OddsLang {
 
-  import probMonad.ToScalaMonadic
+  import Rand.ToScalaMonadic
 
   // This is the standard version of the model.  Some choices are not
   // "uniquely" identified (i.e. they have different IDs in different

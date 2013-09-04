@@ -7,7 +7,7 @@ import inference._
 
 trait StreamOddsLang extends OddsLang {
 
-  import probMonad.ToScalaMonadic
+  import Rand.ToScalaMonadic
 
   // Lazy Lists
   def infix_uniformSplit[A](s: Stream[A]): Rand[(Stream[A], Stream[A])] =
@@ -43,7 +43,7 @@ trait Notes {
 
 trait MusicWarmUpModel extends StreamOddsLang with Notes {
 
-  import probMonad.ToScalaMonadic
+  import Rand.ToScalaMonadic
 
   // Note Transformations
 

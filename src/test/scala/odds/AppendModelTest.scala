@@ -47,7 +47,7 @@ trait AppendModel extends OddsLang {
 
 trait AppendModelLazyTail extends OddsLang {
 
-  import probMonad.ToScalaMonadic
+  import Rand.ToScalaMonadic
 
   // now try lists where the tail itself is a random var
 

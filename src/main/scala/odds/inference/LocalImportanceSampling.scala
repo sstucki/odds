@@ -13,7 +13,7 @@ trait LocalImportanceSampling extends DelayedChoiceIntf {
   this: OddsIntf =>
 
   /** Concrete probability monad type class. */
-  implicit object probMonad extends DelayedChoiceMonad
+  implicit object Rand extends DelayedChoiceMonad
 
   /**
    * Approximate the distribution defined by a probabilistic
