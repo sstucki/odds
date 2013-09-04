@@ -28,8 +28,6 @@ import inference._
  */
 trait GrassModel extends OddsLang {
 
-  import Rand.ToScalaMonadic
-
   // This is the standard version of the model.  Some choices are not
   // "uniquely" identified (i.e. they have different IDs in different
   // branches of the search tree) but this doesn't change the outcome.
@@ -43,6 +41,8 @@ trait GrassModel extends OddsLang {
     }
     if (grassIsWet) rain else never
   }
+
+  import Rand.ToScalaMonadic
 
   // This model neither identifies nor delays choices (i.e. choices
   // have different IDs in every branch and are made exactly in the
@@ -119,7 +119,7 @@ trait GrassModel extends OddsLang {
   }
 }
 
-class GrassModelTest
+class GrassModelSpec
     extends GrassModel
     with ExactInference
     with OddsPrettyPrint
@@ -149,7 +149,7 @@ class GrassModelTest
   }
 }
 
-class GrassModelTreeGenTest
+class GrassModelTreeGenSpec
     extends GrassModel
     with DelayedChoiceTreeGen
     with FlatSpec

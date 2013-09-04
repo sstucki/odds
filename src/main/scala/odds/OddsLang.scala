@@ -42,11 +42,14 @@ trait OddsLang extends OddsIntf with EmbeddedControls {
 
   @inline def flip(p: Double): Rand[Boolean] =
     choose(true -> p, false -> (1-p))
+  @inline def flip(rp: Rand[Double]): Rand[Rand[Boolean]] = fmap(flip _)(rp)
 
   def uniform[A](xs: A*): Rand[A] = if (xs.isEmpty) never else {
-    val p = 1.0 / xs.size
-    choice(xs.map((_, p)):_*)
+    val p = 1.0 / xs.length
+    choose(xs.map((_, p)): _*)
   }
+  @inline def uniform[A](rxs: Rand[Seq[A]]): Rand[Rand[A]] =
+    fmap((xs: Seq[A]) => uniform(xs: _*))(rxs)
 
   /** Condition a probabilistic choice on a Boolean random variable. */
   @inline def cond[A](rx: => Rand[A], rc: Rand[Boolean]): Rand[A] = bind {

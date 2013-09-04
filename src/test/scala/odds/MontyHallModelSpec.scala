@@ -7,16 +7,13 @@ import inference._
 
 trait MontyHallModel extends OddsLang {
 
-  import Rand.ToScalaMonadic
-
   def randomDoor = uniform(1, 2, 3)
 
   // Choose uniformly among remaining doors
-  def remainingDoor(a: Rand[Int], b: Rand[Int]): Rand[Int] = for {
-    av <- a
-    bv <- b
-    c <- uniform(List(1, 2, 3) diff List(av, bv): _*)
-  } yield c
+  def remainingDoor(a: Rand[Int], b: Rand[Int]): Rand[Int] = {
+    val remainingDoors = Rand(List)(1, 2, 3) diff Rand(List)(a, b)
+    uniform(remainingDoors)
+  }
 
   val priceDoor   = randomDoor // the door hiding the price
   val firstChoice = randomDoor // the door you pick
@@ -58,7 +55,7 @@ trait MontyHallMonadicModel extends OddsLang {
   val secondChoiceWins = for ((_, c2) <- monty) yield c2
 }
 
-class MontyHallModelTest
+class MontyHallModelSpec
     extends MontyHallModel
     with ExactInference
     with OddsPrettyPrint
@@ -86,7 +83,7 @@ class MontyHallModelTest
   }
 }
 
-class MontyHallMonadicModelTest
+class MontyHallMonadicModelSpec
     extends MontyHallMonadicModel
     with ExactInference
     with OddsPrettyPrint
