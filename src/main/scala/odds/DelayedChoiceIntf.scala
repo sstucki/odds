@@ -53,23 +53,22 @@ trait DelayedChoiceIntf extends OddsIntf with DistMaps {
     // It is tempting to think we could use the monad laws to
     // simplify/normalize some trees built for the corresponding
     // stochastic computations, e.g. to automatically rewrite
-    // instances of `RandVarBind(RandVarUnit(x), f)` into `f(x)`.
-    // However, the only optimizations we are allowed to perform are
-    // those that replace certain outcomes with other certain
-    // outcomes.  E.g. in the above example, we can perform the
-    // simplification only if `x` is not a stochastic computation
-    // (i.e. does not have type `Rand[_]`).  This is because instances
-    // of `RandVar` actually identify choices, hence replacing them
-    // with another instance will remove information about correlation
-    // between choices and alter the program semantics.  Certain
-    // outcomes are an exception because they are referentially
-    // transparent, i.e. they always correlate perfectly with other
-    // certain outcomes of the same value, so it is safe to replace
-    // them.
+    // instances of `RandVarFmap(RandVarFmap(x, g), f)` into
+    // `RandVarFmap(f(g(x)))`.  However, the only optimizations we are
+    // allowed to perform are those that replace an instance of
+    // `RandVar` with another instance of `RandVar` that will commit
+    // to the same choice during exploration.  This is because
+    // instances of `RandVar` actually identify choices, hence
+    // replacing them with another instance will remove information
+    // about correlation between choices and alter the program
+    // semantics.  Certain outcomes are an exception because they are
+    // referentially transparent, i.e. they always correlate perfectly
+    // with other certain outcomes of the same value, so it is safe to
+    // replace them.
 
     def fmap[A, B](f: A => B)(mx: Rand[A]) = mx match {
       // By `fmap(f) compose unit  ==  unit compose f`
-      case RandVarUnit(x, p) if !x.isInstanceOf[Rand[_]] => unit(f(x), p)
+      case RandVarUnit(x, p) => unit(f(x), p)
 
       // By `fmap(f)(zero)  ==  mzero`
       case RandVarZero       => zero[B]
@@ -81,7 +80,7 @@ trait DelayedChoiceIntf extends OddsIntf with DistMaps {
 
     def join[A](mmx: Rand[Rand[A]]): Rand[A] = mmx match {
       // By `join compose unit  ==  id`
-      case RandVarUnit(x, 1.0) if !x.isInstanceOf[Rand[_]] => x
+      case RandVarUnit(x, 1.0) => x
 
       // By `join(zero)  ==  zero`
       case RandVarZero         => zero
@@ -90,7 +89,7 @@ trait DelayedChoiceIntf extends OddsIntf with DistMaps {
 
     override def bind[A, B](f: A => Rand[B])(mx: Rand[A]) = mx match {
       // By `bind(f) compose unit  ==  f`
-      case RandVarUnit(x, 1.0) if !x.isInstanceOf[Rand[_]] => f(x)
+      case RandVarUnit(x, 1.0) => f(x)
 
       // By `bind(f)(mzero)  ==  zero`
       case RandVarZero         => zero
