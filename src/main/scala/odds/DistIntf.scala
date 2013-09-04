@@ -8,13 +8,10 @@ trait DistIntf {
   this: OddsIntf =>
 
   /** Distribution type. */
-  type Dist[+A]
+  type Dist[+A] <: Iterable[(A, Prob)]
 
-  /**
-   * We want to be able to view discrete distributions as iterables of
-   * value-weight pairs.
-   */
-  implicit def distToIterable[A](d: Dist[A]): Iterable[(A, Prob)]
+  /** Build a distribution from a sequence of value-weight pairs. */
+  def dist[A](xs: (A, Prob)*): Dist[A]
 
   /** Scale the weights of a distribution by a given value. */
   def scale[A](w: Prob, xs: Dist[A]): Dist[A]

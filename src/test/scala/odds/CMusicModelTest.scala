@@ -6,31 +6,7 @@ import org.scalatest.FlatSpec
 // http://okmij.org/ftp/kakuritu/index.html#music
 // http://okmij.org/ftp/kakuritu/music2.ml
 
-trait ListOddsLang extends OddsLang {
-  // Lazy Lists
-  def infix_uniformSplit[A](s: List[A]): Rand[(List[A], List[A])] =
-    for (i <- uniform(0 to s.length : _*)) yield s.splitAt(i)
-  def infix_tail[A](rs: Rand[List[A]]): Rand[List[A]] =
-    for (s <- rs) yield s.tail
-  def infix_head[A](rs: Rand[List[A]]): Rand[A] =
-    for (s <- rs) yield s.head
-  def infix_length[A](rs: Rand[List[A]]): Rand[Int] =
-    for (s <- rs) yield s.length
-
-  def nil[A]: Rand[List[A]] = always(Nil.toList)
-  type PTransform[A] = List[A] => Rand[List[A]]
-  def lmap[A](f: A => Rand[A]): PTransform[A] = x => {
-    if (x.isEmpty) nil else
-    lmap(f)(x.tail).flatMap(xs => f(x.head).map(h => h :: xs))
-  }
-  def lappend[A](xs: Rand[List[A]], ys: Rand[List[A]]): Rand[List[A]] =
-    xs flatMap { x =>
-      if (x.isEmpty) ys else
-      lappend(always(x.tail), ys).map(zs => x.head :: zs)
-    }
-}
-
-trait MusicModel extends ListOddsLang with Notes {
+trait CMusicModel extends CListOddsLang with Notes {
   val octave = List(
     A, Asharp, B, C, Csharp, D, Dsharp, E, F, Fsharp, G, Gsharp,
     A, Asharp, B, C, Csharp, D, Dsharp, E, F, Fsharp, G, Gsharp,
@@ -85,8 +61,9 @@ trait MusicModel extends ListOddsLang with Notes {
       maptranspose5 -> 0.05,
       maptranspose6 -> 0.05,
       maptranspose7 -> 0.1)
-  def transform(x: List[Note]): Rand[List[Note]] =
-    if (x.isEmpty) nil else {
+  def transform(x: CList[Note]): Rand[CList[Note]] = x match {
+    case CNil => nil
+    case CCons(head, tail) =>
       for (
         input <- always(x);
         f1 <- choose_op();
@@ -94,54 +71,18 @@ trait MusicModel extends ListOddsLang with Notes {
         s <- input.uniformSplit;
         r <- lappend(f1(s._1), f2(s._2)))
       yield r
-    }
+  }
 
   def driver(src: List[Note], dst: List[Note]) = {
-    val output = transform(src)
-    always(true) when (output === always(dst))
+    lobserve(transform(asCList(src)), dst)
   }
   def main_simple = driver(List(A, B, C), List(Asharp, C))
   def main = driver(List(E, A, C, E, A, C, B, A, Gsharp, A),
                     List(E, D, C, B, A, B))
 }
 
-class MusicModelSampleTest
-    extends MusicModel
-    with RejectionSampling
-    with OddsPrettyPrint
-    with FlatSpec {
-
-  behavior of "MusicModel with RejectionSampling"
-
-  def run[A](msg: String, body: => Rand[A], samples: Int) {
-    it should "show the results of sampling " + msg + " " + samples in {
-      val r = sample(samples){body}
-      show(r, "sampled " + msg + " " + samples)
-    }
-  }
-  run("main simple", main_simple, 1000)
-  run("main simple", main_simple, 10000)
-  run("main", main, 1000)
-  run("main", main, 10000)
-  run("main", main, 100000)
-}
-
-class MusicModelDepthBoundTest
-    extends MusicModel
-    with DepthBoundInference
-    with OddsPrettyPrint
-    with FlatSpec {
-
-  behavior of "MusicModel with depth bound Inference"
-
-  it should "show the results of dept-bound inferring main simple" in {
-    val (r, p) = reify(10000, error = 0.4)(main_simple)
-    show(r, "depth-bound main simple, err < " + p)
-  }
-}
-
-class MusicModelLocalImportanceSamplingTest
-    extends MusicModel
+class CMusicModelLocalImportanceSamplingTest
+    extends CMusicModel
     with LocalImportanceSampling
     with OddsPrettyPrint
     with FlatSpec {

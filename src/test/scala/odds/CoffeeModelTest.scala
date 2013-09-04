@@ -1,6 +1,7 @@
 package odds
 
 import org.scalatest.FlatSpec
+import org.scalatest.matchers.ShouldMatchers
 
 import scala.language.postfixOps
 
@@ -66,7 +67,8 @@ class CoffeeModelTest
     extends CoffeeModel
     with ExactInference
     with OddsPrettyPrint
-    with FlatSpec {
+    with FlatSpec
+    with ShouldMatchers {
 
   behavior of "CoffeeModel"
 
@@ -76,12 +78,12 @@ class CoffeeModelTest
         case ShouldGrabCoffee(y) => always(y)
       }).flatMap(x => x))
     show(coffeeModel1, "coffeeModel1")
-    expectResult {
+    coffeeModel1.toMap should equal {
       Map(
         "A and D should grab coffee" -> 0.8,
         "B and D should grab coffee" -> 0.4,
         "A and E should grab coffee" -> 0.2)
-    } (coffeeModel1)
+    }
   }
 }
 

@@ -10,9 +10,7 @@ trait RejectionSampling extends OddsIntf with DistIterables {
   type Rand[+A] = RandVar[A]
 
   final case class RandVar[+A](v: Option[A]) extends RandIntf[A] {
-
     def flatMap[B](f: A => Rand[B]): Rand[B] = RandVar(v.flatMap(f(_).v))
-
     def orElse[B >: A](that: Rand[B]): Rand[B] = RandVar(this.v orElse that.v)
   }
 
@@ -49,6 +47,6 @@ trait RejectionSampling extends OddsIntf with DistIterables {
     for (_ <- 1 to samples; v <- x.v) {
       distMap(v) = distMap.getOrElse(v, 0.0) + 1.0
     }
-    distMap
+    scale(1.0 / samples, distMap)
   }
 }

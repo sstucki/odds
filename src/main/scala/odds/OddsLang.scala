@@ -24,21 +24,28 @@ trait OddsLang extends EmbeddedControls with OddsIntf with DistIntf {
 
   // -- Lifted logic operations/relations --
   def infix_&&(x: Rand[Boolean], y: => Rand[Boolean]): Rand[Boolean] =
-    x flatMap { c => if (c) y else always(false) }
+    x flatMap (if (_) y else always(false))
   def infix_||(x: Rand[Boolean], y: => Rand[Boolean]): Rand[Boolean] =
-    x flatMap { c => if (c) always(true) else y }
+    x flatMap (if (_) always(true) else y)
   //def __equals[T](x: Rand[T], y: Rand[T]): Rand[Boolean] = // FIXME!
   //  liftOp2(x,y)(_ == _)
   def infix_===[T](x: Rand[T], y: Rand[T]): Rand[Boolean] =
-    liftOp2(x,y)(_ == _)
+    liftOp2(x, y)(_ == _)
+  def infix_!=[T](x: Rand[T], y: Rand[T]): Rand[Boolean] =
+    liftOp2(x, y)(_ != _)
 
   // -- Lifted arithmetic operations/relations --
-  def infix_+(x: Rand[Int], y: Rand[Int]): Rand[Int] = liftOp2(x,y)(_ + _)
-  def infix_-(x: Rand[Int], y: Rand[Int]): Rand[Int] = liftOp2(x,y)(_ - _)
+  def infix_+(x: Rand[Int], y: Rand[Int]): Rand[Int] = liftOp2(x, y)(_ + _)
+  def infix_-(x: Rand[Int], y: Rand[Int]): Rand[Int] = liftOp2(x, y)(_ - _)
 
-  // -- Virtualized control -- // FIXME!
-  //def __ifThenElse[T](cond: Rand[Boolean], tb: => Rand[T], fb: => Rand[T]) =
-  //  cond flatMap { case true => tb; case false => fb }
+  def __ifThenElse[T](cond: Rand[Boolean], tb: => Rand[T], fb: => Rand[T]) =
+    cond flatMap { case true => tb; case false => fb }
+
+  // HACK -- bug in scala-virtualized
+  override def __ifThenElse[T](cond: =>Boolean, thenp: => T, elsep: => T) = cond match {
+    case true => thenp
+    case false => elsep
+  }
 }
 
 
@@ -46,17 +53,17 @@ trait OddsLang extends EmbeddedControls with OddsIntf with DistIntf {
 trait OddsPrettyPrint {
   this: DistIntf =>
 
-  def pp[A](dist: Dist[A]) = {
-    val d = normalize(dist)
+  def pp[A](dist: Dist[A], normalize: Boolean) = {
+    val d = if (normalize) this.normalize(dist) else dist
     val dSorted = d.toList.sortBy{ case (x, p) => (-p, x.toString) }
     (dSorted map {
       case (x, p) => x + " : " + p
     }).mkString("\n")
   }
 
-  def show[A](dist: Dist[A], desc: String = "") = {
+  def show[A](dist: Dist[A], desc: String = "", normalize: Boolean = false) = {
     println(desc)
-    println(pp(dist))
+    println(pp(dist, normalize))
     println("")
   }
 }

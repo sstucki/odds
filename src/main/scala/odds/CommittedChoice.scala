@@ -33,13 +33,13 @@ trait CommittedChoice[+A] {
 /** Companion object of the [[CommittedChoice]] class. */
 object CommittedChoice {
 
-  type Environment = scala.collection.immutable.Map[Int, Any];
+  type Environment = scala.collection.immutable.Map[Long, Any];
 
   /** Counter to generate new IDs for [[CommittedChoice]] instances. */
-  var idCounter = 0
+  var idCounter: Long = 0
 
   /** Generate a fresh ID for a [[CommittedChoice]] instances. */
-  def freshId: Int = {
+  def freshId: Long = {
     val id = idCounter
     idCounter += 1
     id

@@ -3,51 +3,73 @@ package odds
 import org.scalatest.FlatSpec
 import org.scalatest.matchers.ShouldMatchers
 
-trait StreamOddsLang extends OddsLang {
-  // Lazy Lists
-  def infix_uniformSplit[A](s: Stream[A]): Rand[(Stream[A], Stream[A])] =
-    for (i <- uniform(0 to s.length : _*)) yield s.splitAt(i)
-  def infix_tail[A](rs: Rand[Stream[A]]): Rand[Stream[A]] =
-    for (s <- rs) yield s.tail
-  def infix_head[A](rs: Rand[Stream[A]]): Rand[A] =
-    for (s <- rs) yield s.head
-  def infix_length[A](rs: Rand[Stream[A]]): Rand[Int] =
-    for (s <- rs) yield s.length
-
-  def nil[A]: Rand[Stream[A]] = always(Nil.toStream)
-  type PTransform[A] = Stream[A] => Rand[Stream[A]]
-  def lmap[A](f: A => Rand[A]): PTransform[A] = x => {
-    if (x.isEmpty) nil else
-    lmap(f)(x.tail).flatMap(xs => f(x.head).map(h => h #:: xs))
-  }
-  def lappend[A](xs: Rand[Stream[A]], ys: Rand[Stream[A]]): Rand[Stream[A]] =
-    xs flatMap { x =>
-      if (x.isEmpty) ys else
-      lappend(always(x.tail), ys).map(zs => x.head #:: zs)
+trait CListOddsLang extends OddsLang {
+  // A list where the tail itself is a random var.
+  sealed abstract class CList[+A] {
+    def length: Rand[Int] = this match {
+      case CNil => always(0)
+      case CCons(hd, tl) => always(1)+tl.length
     }
-}
+    def splitAt(n: Int): Rand[(CList[A], CList[A])] = {
+      if (n==0) always((CNil, this)) else this match {
+        case CCons(head, tail) =>
+          for (tl <- tail; (s1, s2) <- tl.splitAt(n-1))
+          yield (CCons(head, always(s1)), s2)
+      }
+    }
+    def uniformSplit: Rand[(CList[A], CList[A])] =
+      for (l <- length; i <- uniform(0 to l: _*); r <- splitAt(i))
+      yield r
+  }
+  case object CNil extends CList[Nothing]
+  case class CCons[+A](head: A, taill: Rand[CList[A]]) extends CList[A]
 
-trait Notes {
-  sealed abstract class Note
-  case object A extends Note
-  case object Asharp extends Note
-  case object B extends Note
-  case object C extends Note
-  case object Csharp extends Note
-  case object D extends Note
-  case object Dsharp extends Note
-  case object E extends Note
-  case object F extends Note
-  case object Fsharp extends Note
-  case object G extends Note
-  case object Gsharp extends Note
+  def infix_length[A](rs: Rand[CList[A]]): Rand[Int] =
+    for (s <- rs; n <- s.length) yield n
+  def infix_head[A](rs: Rand[CList[A]]): Rand[A] =
+    for (s <- rs) yield (s match {
+      case CCons(head, tail) => head
+    })
+  def infix_tail[A](rs: Rand[CList[A]]): Rand[CList[A]] =
+    for (s <- rs; tl <- s match {
+      case CCons(head, tail) => tail
+    }) yield tl
+  def nil[A]: Rand[CList[A]] = always(CNil)
+  type PTransform[A] = CList[A] => Rand[CList[A]]
+  def lmap[A](f: A => Rand[A]): PTransform[A] = x => x match {
+    case CNil => nil
+    case CCons(head, tail) =>
+      for (hd <- f(head); tl <- tail) yield CCons(hd, lmap(f)(tl))
+  }
+  def lappend[A](xs: Rand[CList[A]], ys: Rand[CList[A]]): Rand[CList[A]] = xs flatMap {
+    case CNil => ys
+    case CCons(head, tail) => always(CCons(head, lappend(tail, ys)))
+  }
+  def lobserve[A](s: Rand[CList[A]], l: List[A]): Rand[Boolean] = l match {
+    case Nil => s.length===always(0)
+    case hd::tl =>
+      s flatMap {
+        case CNil => never //always(false)
+        case CCons(rhd, rtail) =>
+          if (rhd==hd) lobserve(rtail, tl)
+          else never //always(false)
+      }
+  }
+  def asCList[A](x: List[A]): CList[A] = x match {
+    case Nil => CNil
+    case x::xs => CCons(x, always(asCList(xs)))
+  }
+  def asLists[A](x: Rand[CList[A]]): Rand[List[A]] = x flatMap {
+    case CNil => always(Nil)
+    case CCons(x, xs) => asLists(xs).map(xs=>x::xs)
+  }
 }
 
 // Translated from
 // http://okmij.org/ftp/kakuritu/index.html#music
 // http://okmij.org/ftp/kakuritu/music1a.ml
 
-trait MusicWarmUpModel extends StreamOddsLang with Notes {
+trait CMusicWarmUpModel extends CListOddsLang with Notes {
   // Note Transformations
 
   // Transpose a note by 1 interval
@@ -86,8 +108,9 @@ trait MusicWarmUpModel extends StreamOddsLang with Notes {
   val f_del: PTransform[Note] = x => nil
   val f_tr1: PTransform[Note] = lmap(transpose1)
   val f_tr5: PTransform[Note] = lmap(transpose5)
-  val transform: PTransform[Note] = x => {
-    if (x.isEmpty) nil else {
+  val transform: PTransform[Note] = x => x match {
+    case CNil => nil
+    case CCons(headd, tail) =>
       for (
         input <- always(x);
         f1 <- choice(
@@ -103,11 +126,10 @@ trait MusicWarmUpModel extends StreamOddsLang with Notes {
         s <- input.uniformSplit;
         r <- lappend(f1(s._1), f2(s._2)))
       yield r
-    }
   }
 
   def main = {
-    val input = List(A, B, C).toStream
+    val input = asCList(List(A, B, C))
     val x = transform(input)
     (x.length===always(3) && x.head===always(Asharp)) flatMap {
       case true => x.tail.head
@@ -116,28 +138,14 @@ trait MusicWarmUpModel extends StreamOddsLang with Notes {
   }
 }
 
-class MusicWarmUpModelSampleTest
-    extends MusicWarmUpModel
-    with RejectionSampling
-    with OddsPrettyPrint
-    with FlatSpec {
-
-  behavior of "MusicWarmUpModel with RejectionSampling"
-
-  it should "show the results of sampling main" in {
-    val r = sample(1000){main}
-    show(r, "sampled main")
-  }
-}
-
-class MusicWarmUpModelExactTest
-    extends MusicWarmUpModel
+class CMusicWarmUpModelExactTest
+    extends CMusicWarmUpModel
     with ExactInference
     with OddsPrettyPrint
     with FlatSpec
     with ShouldMatchers {
 
-  behavior of "MusicWarmUpModel with Exact Inference"
+  behavior of "CMusicWarmUpModel with Exact Inference"
 
   it should "show the results of exactly inferring main" in {
     val r = normalize(reify(main))
@@ -152,5 +160,19 @@ class MusicWarmUpModelExactTest
       case (B, p)      => p should be (0.138888888 plusOrMinus 1e-9)
       case x => throw new Exception("unexpected note: " + x)
     }
+  }
+}
+
+class CMusicWarmUpModelLISTest
+    extends CMusicWarmUpModel
+    with LocalImportanceSampling
+    with OddsPrettyPrint
+    with FlatSpec {
+
+  behavior of "CMusicWarmUpModel with LIS"
+
+  it should "show the results of LIS inferring main" in {
+    val r = sample(1000, 3)(main)
+    show(r, "LIS exact main")
   }
 }
