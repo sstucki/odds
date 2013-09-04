@@ -6,11 +6,7 @@ version := "0.1-SNAPSHOT"
 
 scalaOrganization := "org.scala-lang.virtualized"
 
-scalaVersion := Option(System.getenv("SCALA_VIRTUALIZED_VERSION")).getOrElse("2.10.1-V1")
-
-scalaBinaryVersion := Option(System.getenv("SCALA_VERSION")).getOrElse("2.10.1")
-
-autoScalaLibrary := false
+scalaVersion := Option(System.getenv("SCALA_VIRTUALIZED_VERSION")).getOrElse("2.10.2-RC1")
 
 //--- Dependencies
 
@@ -19,9 +15,8 @@ resolvers ++= Seq(
     "Sonatype Public" at "https://oss.sonatype.org/content/groups/public")
 
 libraryDependencies ++= Seq(
-    "org.scalatest" % "scalatest_2.10" % "2.0.M5b" % "test" intransitive(),
-    "EPFL" % "lms_2.10.1" % "0.3-SNAPSHOT" intransitive(),
-    "org.scala-lang.virtualized" % "scala-library" % "2.10.1-V1")
+    "org.scalatest" % "scalatest_2.10" % "2.0.M5b" % "test",
+    "EPFL" % "lms_2.10" % "0.3-SNAPSHOT")
 
 //--- End of Dependencies
 
@@ -30,8 +25,13 @@ scalacOptions ++= Seq(
   "-deprecation", "-unchecked", "-Xexperimental", "-P:continuations:enable",
   "-Yvirtualize", "-feature", "-language:higherKinds")
 
+//scalacOptions ++= Seq("-Ymacro-debug-lite", "-Xlog-implicits")
+
 // Documentation (scaladoc) options
 scalacOptions in doc += "-external-urls:scala=http://www.scala-lang.org/"
+
+// Add the macro paradise compiler plugin
+addCompilerPlugin("org.scala-lang.virtualized.plugins" % "macro-paradise_2.10.2-RC1" % "2.0.0-SNAPSHOT")
 
 // Our tests are not threadsafe so disabling parallel execution for now
 parallelExecution in Test := false
@@ -43,5 +43,5 @@ publishArtifact in (Compile, packageDoc) := false
 autoCompilerPlugins := true
 
 libraryDependencies <<= (scalaVersion, libraryDependencies) { (ver, deps) =>
-    deps :+ compilerPlugin("org.scala-lang.virtualized.plugins" % "continuations" % ver)
+    deps :+ compilerPlugin("org.scala-lang.plugins" % "continuations" % ver)
 }
