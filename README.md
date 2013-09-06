@@ -3,7 +3,7 @@ Odds
 
 Probabilistic programming in Scala
 
-''Odds'' is a small domain-specific language (DSL) for
+*Odds* is a small domain-specific language (DSL) for
 [probabilistic programming](http://probabilistic-programming.org/),
 embedded in [Scala](http://scala-lang.org/).  Odds provides
 first-class support for random variables and probabilistic choice,
@@ -24,11 +24,11 @@ Installation
 
 2. Install the [SBT](http://www.scala-sbt.org/) build tool.
 
-3. Clone the [GitHub repoository](https://github.com/sstucki/odds):
+3. Clone the [GitHub repository](https://github.com/sstucki/odds):
 
         $ git clone https://github.com/sstucki/odds.git
 
-4. Go into the root directory and compile the source code using sbt:
+4. Go into the root directory and compile the source code using SBT:
 
         $ cd odds
         $ sbt compile
@@ -42,17 +42,19 @@ Installation
 Examples
 --------
 
-Have a look at the various test cases in the
-[test](https://github.com/sstucki/odds/test) directory.  Many of them
-are Odds example programs, illustrating how to write an Odds program
-and perform inference on it.
+Have a look at the various test cases in the `core/test/` directory.
+Many of them are Odds example programs, illustrating how to write an
+Odds program and perform inference on it.
 
 
 Background
 ----------
 
-See our [Scala'13 paper](http://dx.doi.org/10.1145/2489837.2489848)
-for an introduction to Odds and the principles it is built on.
+To build the API docs, run `sbt doc`.  You can find the generated API
+docs in the `core/target/scala-2.10/api/` directory.
+
+Our [Scala'13 paper](http://dx.doi.org/10.1145/2489837.2489848) also
+contains an introduction to Odds and the principles it is built on.
 
 
 Source code
