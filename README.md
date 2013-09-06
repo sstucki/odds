@@ -47,14 +47,15 @@ Many of them are Odds example programs, illustrating how to write an
 Odds program and perform inference on it.
 
 
-Background
-----------
+Documentation
+-------------
 
 To build the API docs, run `sbt doc`.  You can find the generated API
 docs in the `core/target/scala-2.10/api/` directory.
 
 Our [Scala'13 paper](http://dx.doi.org/10.1145/2489837.2489848) also
-contains an introduction to Odds and the principles it is built on.
+contains an introduction to Odds and describes the principles it is
+built on.
 
 
 Source code
