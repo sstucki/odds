@@ -98,8 +98,13 @@ object MonadLifter {
     /** Get the type argument of a monad type. */
     def monadTypeArg(monadInstance: c.Type): c.Type = {
       val mBase = monadInstance.baseType(monad.typeSymbol)
-      val TypeRef(_, _, List(targ)) = mBase
-      targ
+      mBase match {
+        case TypeRef(_, _, List(targ)) => targ
+        //case _ => throw new java.lang.IllegalArgumentException(
+        case _ => c.abort(c.enclosingPosition,
+          "attempt to get type argument of non-type-reference type '" +
+          mBase + "'")
+      }
     }
 
     /** Get the number of nested monadic layers of a monad type. */
@@ -156,6 +161,16 @@ object MonadLifter {
       mtd: c.Name, args: List[(c.Tree, c.Type)], targs: List[c.Type],
       rtype: c.Type, nrtype: c.Type = NoType): c.Tree = {
 
+      def mkCall(mtd: c.Name, args: List[c.Tree], targs: List[c.Type]) = {
+        val callee = Select(args.head, mtd)
+        val mtdArgs = args.tail
+        val calleeAndTypes =
+          if (targs.isEmpty) callee
+          else TypeApply(callee, targs.map(ta => TypeTree(ta)))
+        if (mtdArgs.isEmpty) calleeAndTypes   // Selection
+        else Apply(calleeAndTypes, mtdArgs)   // Application
+      }
+
       val monadAny = monadInst(typeOf[Any])
       val (mtdArgs, bindArgss) = args.map { case (arg, atype) =>
         // Compute the types for the closure arguments and the terms
@@ -173,22 +188,16 @@ object MonadLifter {
 
           // Extract the concrete type argument of the monad type.
           val nAtype = monadTypeArg(atypeWidened)
-          (aid, List((nAtype, arg, aname)))
+          ((aid, nAtype), List((nAtype, arg, aname)))
         } else {
-          (arg, Nil)
+          ((arg, atype), Nil)
         }
       }.unzip
       val bindArgs = bindArgss.flatten
 
       // Build the nested call.
-      val nCallee = Select(mtdArgs.head, mtd)
-      val nMtdArgs = mtdArgs.tail
-      val nCalleeAndTypes =
-        if (targs.isEmpty) nCallee
-        else TypeApply(nCallee, targs.map(ta => TypeTree(ta)))
-      val nCall =
-        if (nMtdArgs.isEmpty) nCalleeAndTypes   // Selection
-        else Apply(nCalleeAndTypes, nMtdArgs)   // Application
+      val (mtdArgNames, mtdArgTypes) = mtdArgs.unzip
+      val nCall = mkCall(mtd, mtdArgNames, targs)
 
       val mClassInst = monadClassInst
       if (bindArgs.isEmpty) {                   // No arguments to lift
@@ -212,13 +221,16 @@ object MonadLifter {
           // performing `nCall` internally.  We can then type check
           // that dummy function and get the return type of the
           // internal `nCall`.
-          val dummyArgs = bindArgs map {
-            case (atype, _, aname) =>
-              ValDef(Modifiers(Flag.PARAM), aname, TypeTree(atype),
-                EmptyTree)
-          }
-          val dummy = q"((..$dummyArgs) => $nCall)"
-          val Function(_, typedCall) = c.typeCheck(dummy)
+          val (dummyArgs, dummyArgNames) = mtdArgTypes.map { atype =>
+            val aname = newTermName(c.fresh("x$"))
+            val arg = ValDef(Modifiers(Flag.PARAM), aname, TypeTree(atype),
+              EmptyTree)
+            (arg, Ident(aname))
+          }.unzip
+          val dummyCall = mkCall(mtd, dummyArgNames, targs)
+          val dummyFun = q"((..$dummyArgs) => $dummyCall)"
+          println(dummyFun)
+          val Function(_, typedCall) = c.typeCheck(dummyFun)
           typedCall.tpe
         }
         val nRetDepth = monadDepth(nRetType)
