@@ -1,4 +1,5 @@
 package ch.epfl.lamp.odds
+package internal
 
 import functors.ProbMonad
 import scala.collection.mutable

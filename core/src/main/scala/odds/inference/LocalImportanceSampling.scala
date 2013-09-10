@@ -1,7 +1,9 @@
 package ch.epfl.lamp.odds
 package inference
 
-import scala.collection.mutable
+import internal.DelayedChoiceIntf
+
+import collection.mutable
 
 /**
  * Importance sampling with depth-bound look-ahead.

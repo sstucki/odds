@@ -2,6 +2,8 @@ package ch.epfl.lamp.odds
 package inference
 
 import functors.ProbMonad
+import internal.DelayedChoiceIntf
+
 import scala.collection.mutable
 
 /** Simple, rejection sampler for the ODDS language. */

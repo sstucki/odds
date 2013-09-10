@@ -1,6 +1,8 @@
 package ch.epfl.lamp.odds
 package inference
 
+import internal.{ CommittedChoice, DelayedChoiceIntf }
+
 /** Basic tree generator interface. */
 trait TreeGenIntf {
   this: OddsIntf =>
@@ -78,7 +80,7 @@ trait TreeGenIntf {
 
 /** Generate search tree for delayed choice monad. */
 trait DelayedChoiceTreeGen extends TreeGenIntf with DelayedChoiceIntf {
-  this: OddsLang =>
+  this: OddsIntf =>
 
   /** Concrete probability monad type class. */
   implicit object Rand extends DelayedChoiceMonad

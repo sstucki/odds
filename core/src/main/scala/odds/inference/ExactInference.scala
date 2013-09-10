@@ -1,6 +1,8 @@
 package ch.epfl.lamp.odds
 package inference
 
+import internal.DelayedChoiceIntf
+
 /** Simple, exact inference for the ODDS language. */
 trait ExactInference extends DelayedChoiceIntf {
   this: OddsIntf =>

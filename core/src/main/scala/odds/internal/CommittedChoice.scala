@@ -1,4 +1,5 @@
 package ch.epfl.lamp.odds
+package internal
 
 /** A trait representing commitments to choices as state. */
 trait CommittedChoice[+A] {

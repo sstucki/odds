@@ -1,6 +1,8 @@
 package ch.epfl.lamp.odds
 package inference
 
+import internal.DelayedChoiceIntf
+
 /**
  * Depth-bound inference for the ODDS language.
  *
