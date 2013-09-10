@@ -99,7 +99,7 @@ trait MusicModel extends ListOddsLang with Notes {
 
   def driver(src: List[Note], dst: List[Note]) = {
     val output = transform(src)
-    always(true) when (output === always(dst))
+    always(true) when (output == always(dst))
   }
   def main_simple = driver(List(A, B, C), List(Asharp, C))
   def main = driver(List(E, A, C, E, A, C, B, A, Gsharp, A),

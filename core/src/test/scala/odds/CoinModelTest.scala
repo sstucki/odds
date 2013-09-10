@@ -96,7 +96,7 @@ class CoinModelTest
       val coin = choice(0 -> 0.5, 1 -> 0.5)
       val sum1 = coin + coin
       val sum2 = sum1 + coin
-      (sum2 === always(3)) flatMap {
+      (sum2 == always(3)) flatMap {
         case true => sum1
         case false => coin
       }

@@ -2,7 +2,6 @@ package ch.epfl.lamp.odds
 package macros
 
 import language.dynamics
-import language.experimental.macros
 
 import reflect.macros.Context
 

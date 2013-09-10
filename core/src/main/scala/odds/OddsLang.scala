@@ -2,7 +2,7 @@ package ch.epfl.lamp.odds
 
 import language.implicitConversions
 
-/** Lifted logic and arithmetic operations. */
+/** Odds core language API. */
 trait OddsLang extends OddsIntf with EmbeddedControls {
 
   import Rand._
@@ -75,19 +75,28 @@ trait OddsLang extends OddsIntf with EmbeddedControls {
     bind { c: Boolean => if (c) y else always(false) } (x)
   def infix_||(x: Rand[Boolean], y: => Rand[Boolean]): Rand[Boolean] =
     bind { c: Boolean => if (c) always(true) else y } (x)
-  def __equal[T](x: Rand[T], y: Rand[T]): Rand[Boolean] = x.__equals(y)
-  def infix_===[T](x: Rand[T], y: Rand[T]): Rand[Boolean] = x.__==(y)
-  def infix_!=[T](x: Rand[T], y: Rand[T]): Rand[Boolean] = x.__!=(y)
 
-  def __ifThenElse[T](cond: Rand[Boolean], tb: => Rand[T], fb: => Rand[T]) =
-    cond flatMap { case true => tb; case false => fb }
+  // FIXME: Replace this with YinYang-type VirtualAny/VirtualAnyRef
+  def infix_equals[A, B](x:  A,       ry: Rand[B]): Rand[Boolean] =
+    unit(x).__equals(ry)
+  def infix_equals[A, B](rx: Rand[A], y:  B      ): Rand[Boolean] =
+    rx.__equals(unit(y))
+  def infix_equals[A, B](rx: Rand[A], ry: Rand[B]): Rand[Boolean] =
+    rx.__equals(ry)
+  def __equal[A, B](x:  A,       ry: Rand[B]): Rand[Boolean] = unit(x).__==(ry)
+  def __equal[A, B](rx: Rand[A], y:  B      ): Rand[Boolean] = rx.__==(unit(y))
+  def __equal[A, B](rx: Rand[A], ry: Rand[B]): Rand[Boolean] = rx.__==(ry)
+  def infix_!=[A, B](x:  A,       ry: Rand[B]): Rand[Boolean] = unit(x).__!=(ry)
+  def infix_!=[A, B](rx: Rand[A], y:  B      ): Rand[Boolean] = rx.__!=(unit(y))
+  def infix_!=[A, B](rx: Rand[A], ry: Rand[B]): Rand[Boolean] = rx.__!=(ry)
 
-
+  def __ifThenElse[T](
+    cond: Rand[Boolean], tb: => Rand[T], fb: => Rand[T]): Rand[T] =
+    bind { c: Boolean => if (c) tb else fb } (cond)
   // HACK -- bug in scala-virtualized
-  override def __ifThenElse[T](cond: =>Boolean, thenp: => T, elsep: => T) = cond match {
-    case true => thenp
-    case false => elsep
-  }
+  override def __ifThenElse[T](cond: => Boolean, tb: => T, fb: => T): T =
+    cond match { case true => tb; case false => fb }
+
 
   /**
    * Implicit conversion from lists of random variables to random
@@ -104,24 +113,4 @@ trait OddsLang extends OddsIntf with EmbeddedControls {
       } (rx)
       case Nil => unit(Nil)
     }
-}
-
-
-/** Functions for pretty printing. */
-trait OddsPrettyPrint {
-  this: DistIntf =>
-
-  def pp[A](dist: Dist[A], normalize: Boolean) = {
-    val d = if (normalize) this.normalize(dist) else dist
-    val dSorted = d.toList.sortBy{ case (x, p) => (-p, x.toString) }
-    (dSorted map {
-      case (x, p) => x + " : " + p
-    }).mkString("\n")
-  }
-
-  def show[A](dist: Dist[A], desc: String = "", normalize: Boolean = false) = {
-    println(desc)
-    println(pp(dist, normalize))
-    println("")
-  }
 }

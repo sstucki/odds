@@ -11,12 +11,12 @@ object BuildSettings {
     scalacOptions ++= Seq(
       "-deprecation", "-unchecked", "-feature", "-Xexperimental",
       "-Yvirtualize", "-language:higherKinds"),
-    //scalacOptions ++= Seq("-Ymacro-debug-lite", "-Xlog-implicits"),
+    //scalacOptions += "-Xlog-implicits",
+    //scalacOptions += "-Ymacro-debug-lite",
     autoAPIMappings := true,
     libraryDependencies += "org.scalatest" % "scalatest_2.10" % "2.0.M5b" % "test",
     //libraryDependencies += "EPFL" % "lms_2.10" % "0.3-SNAPSHOT",
-    addCompilerPlugin("org.scala-lang.virtualized.plugins" % "macro-paradise_2.10.2-RC1" % "2.0.0-SNAPSHOT")
-  )
+    addCompilerPlugin("org.scala-lang.virtualized.plugins" % "macro-paradise_2.10.2-RC1" % "2.0.0-SNAPSHOT"))
 }
 
 object MyBuild extends Build {
@@ -41,6 +41,7 @@ object MyBuild extends Build {
     id = "macros",
     base = file("macros"),
     settings = buildSettings ++ Seq(
+      scalacOptions += "-language:experimental.macros",
       libraryDependencies <+= (scalaVersion)("org.scala-lang" % "scala-reflect" % _))
   ) dependsOn(common)
 

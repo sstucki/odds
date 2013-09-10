@@ -45,27 +45,6 @@ trait OddsIntf extends DistIntf {
     def when(cond: Rand[Boolean]): Rand[A] = Rand.bind {
       c: Boolean => if (c) this else Rand.zero
     } (cond)
-
-    /** Compare two random variables for equality. */
-    def __equals[B](that: Rand[B]): Rand[Boolean] = Rand.bind { x: A =>
-      Rand.fmap { y: B =>
-        x.equals(y)
-      }(that)
-    }(this)
-
-    /** Compare two random variables for equality. */
-    def __==[B](that: Rand[B]): Rand[Boolean] = Rand.bind { x: A =>
-      Rand.fmap { y: B =>
-        x.==(y)
-      }(that)
-    }(this)
-
-    /** Compare two random variables for inequality. */
-    def __!=[B](that: Rand[B]): Rand[Boolean] = Rand.bind { x: A =>
-      Rand.fmap { y: B =>
-        x.!=(y)
-      }(that)
-    }(this)
   }
 
   /**

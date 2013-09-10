@@ -51,7 +51,7 @@ trait CListOddsLang extends OddsLang {
     case CCons(head, tail) => always(CCons(head, lappend(tail, ys)))
   }
   def lobserve[A](s: Rand[CList[A]], l: List[A]): Rand[Boolean] = l match {
-    case Nil => s.length===always(0)
+    case Nil    => s.length == 0
     case hd::tl =>
       s flatMap {
         case CNil => never //always(false)
@@ -139,10 +139,7 @@ trait CMusicWarmUpModel extends CListOddsLang with Notes {
   def main = {
     val input = asCList(List(A, B, C))
     val x = transform(input)
-    (x.length===always(3) && x.head===always(Asharp)) flatMap {
-      case true => x.tail.head
-      case false => never
-    }
+    x.tail.head when (x.length == 3 && x.head == Asharp)
   }
 }
 

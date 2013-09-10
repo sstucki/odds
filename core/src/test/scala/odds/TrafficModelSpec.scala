@@ -47,7 +47,7 @@ trait TrafficModel extends OddsLang {
   def crash(driver1: Driver, driver2: Driver, light: Rand[Light]) = {
     val d1 = driver1(light)
     val d2 = driver2(otherRandLight(light))
-    if ((d1 === Drive) && (d2 === Drive)) {
+    if ((d1 == Drive) && (d2 == Drive)) {
       choose(Crash -> 0.9, NoCrash -> 0.1)
     } else {
       always(NoCrash)

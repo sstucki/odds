@@ -24,7 +24,7 @@ trait AppendModel extends OddsLang {
     // query: X ::: f2 == t3 ::: f2, solve for X
     val x = randomList()
     val xf2 = x ::: always(f2)
-    (x, f2, xf2) when (xf2 === t3 ::: f2)
+    (x, f2, xf2) when (xf2 == t3 ::: f2)
   }
 
   val appendModel5: Rand[(List[Boolean], List[Boolean])] = {
@@ -32,7 +32,7 @@ trait AppendModel extends OddsLang {
     val x = randomList()
     val y = randomList()
     val xy = x ::: y
-    (x, y) when (xy === always(t3 ::: f2))
+    (x, y) when (xy == always(t3 ::: f2))
   }
 
   val appendModel6: Rand[(List[Boolean], List[Boolean])] = {
@@ -40,7 +40,7 @@ trait AppendModel extends OddsLang {
     val x = randomList()
     val y = randomList()
     val xy = x ++ y
-    (x, y) when (xy === t3 ++ f2)
+    (x, y) when (xy == t3 ++ f2)
   }
 }
 

@@ -1,9 +1,8 @@
 package ch.epfl.lamp.odds
 package macros
 
-import language.experimental.macros
-
 import reflect.macros.Context
+import reflect.macros.TypecheckException
 
 import functors.MonadPlus
 
@@ -88,6 +87,7 @@ object MonadLifter {
 
     import c.universe._
 
+    /** The monad type associated with this lifter bundle. */
     val monad: c.Type
 
     /** Construct a monad instance. */
@@ -124,6 +124,13 @@ object MonadLifter {
       val monadPlusCons = weakTypeOf[MonadPlus[Dummy]].typeConstructor
       c.inferImplicitValue(
         appliedType(monadPlusCons, List(monad.typeConstructor)), false)
+    }
+
+    /** Type check a tree. */
+    def typeCheck(tree: c.Tree): c.Tree = {
+      try c.typeCheck(tree) catch {
+        case TypecheckException(_, msg) => c.abort(c.enclosingPosition, msg)
+      }
     }
 
     /**
@@ -200,10 +207,11 @@ object MonadLifter {
       val nCall = mkCall(mtd, mtdArgNames, targs)
 
       val mClassInst = monadClassInst
+      val retDepth = monadDepth(rtype)
       if (bindArgs.isEmpty) {                   // No arguments to lift
-        q"$mClassInst.unit{$nCall}"
+        if (retDepth == 0) nCall                // No lifting expected
+        else q"$mClassInst.unit{$nCall}"        // Trivial lifting
       } else {                                  // Lift arguments
-        val retDepth = monadDepth(rtype)
 
         val nRetType = if (nrtype != NoType) nrtype else {
           // At this point, we need to infer the return type of
@@ -229,8 +237,7 @@ object MonadLifter {
           }.unzip
           val dummyCall = mkCall(mtd, dummyArgNames, targs)
           val dummyFun = q"((..$dummyArgs) => $dummyCall)"
-          println(dummyFun)
-          val Function(_, typedCall) = c.typeCheck(dummyFun)
+          val Function(_, typedCall) = typeCheck(dummyFun)
           typedCall.tpe
         }
         val nRetDepth = monadDepth(nRetType)
@@ -444,7 +451,7 @@ object MonadicProduct {
           // to get the return type of the `lift` method and the
           // `Inner` type we are about to materialize.
           val dummy = q"(($pname: $ptype) => $call)"
-          val Function(_, typedCall) = c.typeCheck(dummy)
+          val Function(_, typedCall) = lb.typeCheck(dummy)
           val callType = typedCall.tpe
           val innerType = lb.monadTypeArg(typedCall.tpe)
 

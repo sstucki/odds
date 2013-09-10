@@ -24,8 +24,8 @@ trait MontyHallModel extends OddsLang {
   // You switch doors
   val secondChoice = remainingDoor(firstChoice, openDoor)
 
-  val firstChoiceWins  = firstChoice  === priceDoor
-  val secondChoiceWins = secondChoice === priceDoor
+  val firstChoiceWins  = firstChoice  == priceDoor
+  val secondChoiceWins = secondChoice == priceDoor
 }
 
 trait MontyHallMonadicModel extends OddsLang {

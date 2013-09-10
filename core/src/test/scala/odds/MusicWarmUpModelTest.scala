@@ -106,7 +106,7 @@ trait MusicWarmUpModel extends StreamOddsLang with Notes {
   def main = {
     val input = List(A, B, C).toStream
     val x = transform(input)
-    (x.length===always(3) && x.head===always(Asharp)) flatMap {
+    (x.length == 3 && x.head == Asharp) flatMap {
       case true => x.tail.head
       case false => never
     }
