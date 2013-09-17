@@ -15,29 +15,29 @@ import functors.MonadPlus
  * (using the `Dynamic` trait) and rewriting (using macros) any call
  * of the form `(r: M[A]).m(x, y, ..., z)` into
  * {{{
- *   bind { x0 =>
- *     bind { y0 =>
- *       ...
- *       bind { z0 =>
- *         fmap { r0 =>
+ *   bind(z) { z0 =>
+ *     ...
+ *     bind(y) { y0 =>
+ *       bind(x) { x0 =>
+ *         fmap(r) { r0 =>
  *           r0.m(x0, y0, ..., z0)
- *         }(r)
- *       }(z)
- *       ...
- *     }(y)
- *   }(x)
+ *         }
+ *       }
+ *     }
+ *     ...
+ *   }
  * }}}
  * using the monadic operations `bind` and `fmap` provided by the
  * monad instance corresponding to `M`.
  *
  * @todo FIXME: SI-7776 prevents implementation of type parameters.
  */
-trait MonadLifter[M[+_]] extends DynamicMacro[M[_]] {
+trait MonadLifter[M[+_]] extends DynamicMacro[M[Any]] {
 
   import MonadLifter.Handler._
 
-  override def applyDynamic(name: String)(args: Any*): M[_] =
-    macro applyDynamicMacro[M[_]]
+  override def applyDynamic(name: String)(args: Any*): M[Any] =
+    macro applyDynamicMacro[M[Any]]
   // override def applyDynamic[T1](name: String)(args: Any*)(
   //   implicit d1: DummyImplicit): M[_] =
   //   macro applyDynamicMacro[T1, M[_]]
@@ -47,8 +47,8 @@ trait MonadLifter[M[+_]] extends DynamicMacro[M[_]] {
   //   macro applyDynamicMacro[T1, T2, T3, M[_]] */
 
   override def applyDynamicNamed(name: String)(
-    args: (String, Any)*): M[_] =
-    macro applyDynamicNamedMacro[M[_]]
+    args: (String, Any)*): M[Any] =
+    macro applyDynamicNamedMacro[M[Any]]
   // override def applyDynamicNamed[T1](name: String)(
   //  args: (String, Any)*): M[_] =
   //   macro applyDynamicNamedMacro[T1, M[_]]
@@ -59,8 +59,8 @@ trait MonadLifter[M[+_]] extends DynamicMacro[M[_]] {
   //   args: (String, Any)*): M[_] =
   //   macro applyDynamicNamedMacro[T1, T2, T3, M[_]]
 
-  override def selectDynamic(name: String): M[_] =
-    macro selectDynamicMacro[M[_]]
+  override def selectDynamic(name: String): M[Any] =
+    macro selectDynamicMacro[M[Any]]
   // override def selectDynamic[T1](name: String): M[_] =
   //   macro selectDynamicMacro[T1, M[_]]
   // override def selectDynamic[T1, T2](name: String): M[_] =
@@ -129,7 +129,8 @@ object MonadLifter {
     /** Type check a tree. */
     def typeCheck(tree: c.Tree): c.Tree = {
       try c.typeCheck(tree) catch {
-        case TypecheckException(_, msg) => c.abort(c.enclosingPosition, msg)
+        case TypecheckException(_, msg) => c.abort(c.enclosingPosition,
+          "type error during lifting: " + msg)
       }
     }
 
@@ -159,14 +160,11 @@ object MonadLifter {
      * @param targs the type arguments of the call.
      * @param rtype the expected monadic return type of the resulting
      *   call.
-     * @param nrtype the expected result type of the original call
-     *   (optional).  If `nrtype` is `NoType`, the method will try to
-     *   infer the return type.
      * @return the tree of the lifted call.
      */
     def lift(
       mtd: c.Name, args: List[(c.Tree, c.Type)], targs: List[c.Type],
-      rtype: c.Type, nrtype: c.Type = NoType): c.Tree = {
+      rtype: c.Type): c.Tree = {
 
       def mkCall(mtd: c.Name, args: List[c.Tree], targs: List[c.Type]) = {
         val callee = Select(args.head, mtd)
@@ -210,36 +208,33 @@ object MonadLifter {
       val retDepth = monadDepth(rtype)
       if (bindArgs.isEmpty) {                   // No arguments to lift
         if (retDepth == 0) nCall                // No lifting expected
-        else q"$mClassInst.unit{$nCall}"        // Trivial lifting
+        else q"$mClassInst.unit { $nCall }"     // Trivial lifting
       } else {                                  // Lift arguments
 
-        val nRetType = if (nrtype != NoType) nrtype else {
-          // At this point, we need to infer the return type of
-          // `nCall` in order to decide whether the innermost
-          // monadic option should be a `bind` (if the return type
-          // is deep enough) or an `fmap` (if the return type is
-          // shallower than the expected overall return type).
-          // Ideally, we'd just type check `nCall` to infer its
-          // result type.  However, some of the method arguments in
-          // `nCall` are free (and untyped) identifiers, which might
-          // lead to the type checker not being able to infer the
-          // return type correctly (e.g. because we might be calling
-          // an overloaded method).  So instead, we build a dummy
-          // function binding (and typing) the free identifiers and
-          // performing `nCall` internally.  We can then type check
-          // that dummy function and get the return type of the
-          // internal `nCall`.
-          val (dummyArgs, dummyArgNames) = mtdArgTypes.map { atype =>
-            val aname = newTermName(c.fresh("x$"))
-            val arg = ValDef(Modifiers(Flag.PARAM), aname, TypeTree(atype),
-              EmptyTree)
-            (arg, Ident(aname))
-          }.unzip
-          val dummyCall = mkCall(mtd, dummyArgNames, targs)
-          val dummyFun = q"((..$dummyArgs) => $dummyCall)"
-          val Function(_, typedCall) = typeCheck(dummyFun)
-          typedCall.tpe
-        }
+        // At this point, we need to infer the return type of `nCall`
+        // in order to decide whether the innermost monadic option
+        // should be a `bind` (if the return type is deep enough) or
+        // an `fmap` (if the return type is shallower than the
+        // expected overall return type).  Ideally, we'd just type
+        // check `nCall` to infer its result type.  However, some of
+        // the method arguments in `nCall` are free (and untyped)
+        // identifiers, which might lead to the type checker not being
+        // able to infer the return type correctly (e.g. because we
+        // might be calling an overloaded method).  So instead, we
+        // build a dummy function binding (and typing) the free
+        // identifiers and performing `nCall` internally.  We can then
+        // type check that dummy function and get the return type of
+        // the internal `nCall`.
+        val (dummyArgs, dummyArgNames) = mtdArgTypes.map { atype =>
+          val aname = newTermName(c.fresh("x$"))
+          val arg = ValDef(Modifiers(Flag.PARAM), aname, TypeTree(atype),
+            EmptyTree)
+          (arg, Ident(aname))
+        }.unzip
+        val dummyCall = mkCall(mtd, dummyArgNames, targs)
+        val dummyFun = q"((..$dummyArgs) => $dummyCall)"
+        val Function(_, typedCall) = typeCheck(dummyFun)
+        val nRetType = typedCall.tpe
         val nRetDepth = monadDepth(nRetType)
 
         val (bindArgs1, nCall1) = if (nRetDepth >= retDepth) {
@@ -249,19 +244,14 @@ object MonadLifter {
           // `nCall` returns shallow result, wrap it into an `fmap`.
           val (atype1, aterm1, aname1) = bindArgs.head
           val fmap =
-            q"$mClassInst.fmap{ ($aname1: $atype1) => $nCall }($aterm1)"
+            q"$mClassInst.fmap($aterm1) { ($aname1: $atype1) => $nCall }"
           (bindArgs.tail, fmap)
         }
 
-        // Since `nCall1` might have been (partially) type checked
-        // already, we need to reset its symbols and types so the type
-        // checker will properly recheck it after macro expansion.
-        val nCall2 = c.resetAllAttrs(nCall1)
-
         // Add `bind`s for the remaining arguments.
-        (bindArgs1 :\ nCall2) {
+        (bindArgs1 :\ nCall1) {
           case ((atype, aterm, aname), call) =>
-            q"$mClassInst.bind{ ($aname: $atype) => $call }($aterm)"
+            q"$mClassInst.bind($aterm) { ($aname: $atype) => $call }"
         }
       }
     }
@@ -280,7 +270,7 @@ object MonadLifter {
       val Ident(mtd) = c.parse(name)
       val rterm = c.prefix.tree
       val args1 = (rterm, rterm.tpe) :: args.map(a => (a, a.tpe))
-      c.Expr(lb.lift(mtd, args1, targs.tail, rterm.tpe))
+      c.Expr(lb.typeCheck(lb.lift(mtd, args1, targs.tail, rterm.tpe)))
     }
 
     // FIMXE: Implement handler for `applyDynamicNamed` calls.
@@ -295,7 +285,7 @@ object MonadLifter {
       val Ident(member) = c.parse(name)
       val rterm = c.prefix.tree
       val receiver = List((rterm, rterm.tpe))
-      c.Expr(lb.lift(member, receiver, targs.tail, rterm.tpe))
+      c.Expr(lb.typeCheck(lb.lift(member, receiver, targs.tail, rterm.tpe)))
     }
   }
 }

@@ -67,20 +67,20 @@ trait DelayedChoiceIntf extends OddsIntf with DistMaps {
     // with other certain outcomes of the same value, so it is safe to
     // replace them.
 
-    def fmap[A, B](f: A => B)(mx: Rand[A]) = mx match {
-      // By `fmap(f) compose unit  ==  unit compose f`
+    def fmap[A, B](mx: Rand[A])(f: A => B): Rand[B] = mx match {
+      // By `fmap(unit(mx))(f)  ==  unit(f(mx))`
       case RandVarUnit(x, p) => unit(f(x), p)
 
-      // By `fmap(f)(zero)  ==  mzero`
+      // By `fmap(zero)(f)  ==  mzero`
       case RandVarZero       => zero[B]
       case _                 => RandVarFmap(mx, f)
     }
 
-    @inline private def unit[A](x: A, p: Prob) = RandVarUnit(x, p)
-    @inline def unit[A](x: A)                  = unit(x, 1.0)
+    @inline private def unit[A](x: A, p: Prob): Rand[A] = RandVarUnit(x, p)
+    @inline def unit[A](x: A): Rand[A]                  = unit(x, 1.0)
 
     def join[A](mmx: Rand[Rand[A]]): Rand[A] = mmx match {
-      // By `join compose unit  ==  id`
+      // By `join(unit(mx))  ==  id(mx)`
       case RandVarUnit(x, 1.0) => x
 
       // By `join(zero)  ==  zero`
@@ -88,16 +88,16 @@ trait DelayedChoiceIntf extends OddsIntf with DistMaps {
       case _                   => RandVarJoin(mmx)
     }
 
-    override def bind[A, B](f: A => Rand[B])(mx: Rand[A]) = mx match {
-      // By `bind(f) compose unit  ==  f`
+    override def bind[A, B](mx: Rand[A])(f: A => Rand[B]): Rand[B] = mx match {
+      // By `bind(unit(mx))(f)  ==  f`
       case RandVarUnit(x, 1.0) => f(x)
 
-      // By `bind(f)(mzero)  ==  zero`
+      // By `bind(mzero)(f)  ==  zero`
       case RandVarZero         => zero
       case _                   => RandVarBind(mx, f)
       }
 
-    @inline def zero[A] = RandVarZero
+    @inline def zero[A]: Rand[A] = RandVarZero
 
     def plus[A](m1: Rand[A], m2: Rand[A]): Rand[A] = (m1, m2) match {
       // By monoid identity

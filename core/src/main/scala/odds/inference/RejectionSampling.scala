@@ -18,13 +18,14 @@ trait RejectionSampling extends OddsIntf with DistMaps {
 
   /** Concrete probability monad type class. */
   implicit object Rand extends RandInternalIntf {
-    @inline def fmap[A, B](f: A => B)(mx: Rand[A]) = RandVar(mx.v.map(f))
-    @inline def unit[A](x: A) = choose(Dist(x -> 1.0))
+    @inline def fmap[A, B](mx: Rand[A])(f: A => B): Rand[B] =
+      RandVar(mx.v.map(f))
+    @inline def unit[A](x: A): Rand[A] = choose(Dist(x -> 1.0))
     @inline def join[A](mmx: Rand[Rand[A]]): Rand[A] =
       mmx.v.getOrElse(_zero)
-    @inline override def bind[A, B](f: A => Rand[B])(mx: Rand[A]) =
+    @inline override def bind[A, B](mx: Rand[A])(f: A => Rand[B]): Rand[B] =
       mx.v.map(f).getOrElse(_zero)
-    @inline def zero[A] = _zero
+    @inline def zero[A]: Rand[A] = _zero
     @inline def plus[A](m1: Rand[A], m2: Rand[A]): Rand[A] =
       RandVar(m1.v orElse m2.v)
     @inline def choose[A](xs: Dist[A]): Rand[A] =

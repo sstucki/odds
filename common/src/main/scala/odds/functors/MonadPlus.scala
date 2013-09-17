@@ -11,14 +11,14 @@ package functors
  * Implementations of the methods in [[MonadPlus]] should fulfill the
  * following laws (for some equivalence relation `==`):
  * {{{
- *   fmap(id)                    ==  id
- *   fmap(g compose f)           ==  fmap(g) compose fmap(f)
+ *   fmap(mx)(id)                ==  id(mx)
+ *   fmap(mx)(g compose f)       ==  fmap(fmap(mx)(f))(g)
  *
- *   unit compose f              ==  fmap(f) compose unit
- *   join compose fmap(fmap(f))  ==  fmap(f) compose join
+ *   unit(f(mx))                 ==  fmap(unit(mx))(f)
+ *   join(fmap(mx)(fmap(_)(f)))  ==  fmap(join(mx))(f)
  *
- *   join compose fmap(unit)     ==  join compose unit   ==  id
- *   join compose fmap(join)     ==  join compose join
+ *   join(fmap(mx)(unit))        ==  join(unit(mx))  ==  id(mx)
+ *   join(fmap(mx)(join))        ==  join(join(mx))
  * }}}
  *
  * The first two laws are just the functor laws for `M`, the second
@@ -28,13 +28,13 @@ package functors
  * If an instance of this class overrides the derived `bind` method
  * (monadic extension), they should conform to the following laws:
  * {{{
- *   bind(f) compose unit  ==  f
- *   bind(unit)            ==  id
+ *   bind(unit(mx))(f)     ==  f(mx)
+ *   bind(mx)(unit)        ==  id(mx)
  * }}}
  * which can easily be derived from the above laws and the following
  * additional equivalence characterizing monadic extension.
  * {{{
- *   bind(f)  ==  join compose fmap(f)
+ *   bind(mx)(f)  ==  join(fmap(mx)(f))
  * }}}
  *
  * ===Monoidal laws===
@@ -57,9 +57,9 @@ package functors
  * In particular, this implies the following derived laws for
  * functions `A => M[B]` (that is, Kleisli morphisms):
  * {{{
- *   bind(f)(zero)         ==  zero
- *   bind(x => zero)(mx)   ==  zero
- *   bind(f)(mx plus my)   ==  bind(f)(mx) plus bind(f)(my)
+ *   bind(zero)(f)         ==  zero
+ *   bind(mx)(x => zero)   ==  zero
+ *   bind(mx plus my)(f)   ==  bind(mx)(f) plus bind(my)(f)
  * }}}
  *
  * ==For functional programmers==
@@ -102,7 +102,7 @@ trait MonadPlus[M[+A]] {
    * This corresponds to the mapping (on morphisms) defined by the
    * functor `M` of the monad `(M, unit, join)`.
    */
-  def fmap[A, B](f: A => B)(mx : M[A]): M[B]
+  def fmap[A, B](mx: M[A])(f: A => B): M[B]
 
   /**
    * Monadic unit.
@@ -145,9 +145,9 @@ trait MonadPlus[M[+A]] {
    * ==For categorists==
    * This corresponds to monadic extension operation.  It is related
    * to the Kleisli composition `g * f` of two morphisms `f: X -> M Y`
-   * and `g: Y -> M Z` as follows: `bind(g) . f = g * f`.
+   * and `g: Y -> M Z` as follows: `bind(_)(g) compose f = g * f`.
    */
-  @inline def bind[A, B](f: A => M[B])(mx: M[A]): M[B] = join(fmap(f)(mx))
+  @inline def bind[A, B](mx: M[A])(f: A => M[B]): M[B] = join(fmap(mx)(f))
 
   /**
    * Monoidal unit (monadic ''zero'').
@@ -182,12 +182,12 @@ trait MonadPlus[M[+A]] {
   implicit final class ToScalaMonadic[+A](mx: M[A]) {
 
     //@inline def ++[B >: A](my: M[B]): M[B] = plus(mx, my)
-    @inline def map[B](f: A => B): M[B] = fmap(f)(mx)
-    @inline def filter(p: A => Boolean): M[A] = bind { x: A =>
+    @inline def map[B](f: A => B): M[B] = fmap(mx)(f)
+    @inline def filter(p: A => Boolean): M[A] = bind(mx) { x =>
       if (p(x)) unit(x) else zero
-    } (mx)
-    @inline def flatMap[B](f: A => M[B]): M[B] = bind(f)(mx)
-    @inline def foreach[U](f: A => U): Unit = fmap(f)(mx)
+    }
+    @inline def flatMap[B](f: A => M[B]): M[B] = bind(mx)(f)
+    @inline def foreach[U](f: A => U): Unit = fmap(mx)(f)
     @inline def orElse[B >: A](my: M[B]): M[B] = plus(mx, my)
     @inline def withFilter(p: A => Boolean): WithFilter =
       new WithFilter(p)
@@ -195,9 +195,9 @@ trait MonadPlus[M[+A]] {
     /** View for `withFilter` method. */
     final class WithFilter(p: A => Boolean) {
       //@inline def ++[B >: A](my: M[B]): M[B] = plus(mx filter p, my)
-      @inline def map[B](f: A => B): M[B] = fmap(f)(mx filter p)
-      @inline def flatMap[B](f: A => M[B]): M[B] = bind(f)(mx filter p)
-      @inline def foreach[U](f: A => U): Unit = fmap(f)(mx filter p)
+      @inline def map[B](f: A => B): M[B] = fmap(mx filter p)(f)
+      @inline def flatMap[B](f: A => M[B]): M[B] = bind(mx filter p)(f)
+      @inline def foreach[U](f: A => U): Unit = fmap(mx filter p)(f)
       @inline def orElse[B >: A](my: M[B]): M[B] = plus(mx filter p, my)
       @inline def withFilter(q: A => Boolean): WithFilter =
         new WithFilter(x => p(x) && q(x))

@@ -38,13 +38,15 @@ trait OddsIntf extends DistIntf {
      *     both when coin1
      * }}}
      *
+     * FIXME: Make this work with deep conditions.
+     *
      * @param cond the observation (random variable) to condition on.
      * @return the conditional probability of `this` given `cond`,
      *         i.e. `P(this | cond)`
      */
-    def when(cond: Rand[Boolean]): Rand[A] = Rand.bind {
+    def when(cond: Rand[Boolean]): Rand[A] = Rand.bind(cond) {
       c: Boolean => if (c) this else Rand.zero
-    } (cond)
+    }
   }
 
   /**

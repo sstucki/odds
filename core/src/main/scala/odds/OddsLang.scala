@@ -42,26 +42,26 @@ trait OddsLang extends OddsIntf with EmbeddedControls {
 
   @inline def flip(p: Double): Rand[Boolean] =
     choose(true -> p, false -> (1-p))
-  @inline def flip(rp: Rand[Double]): Rand[Rand[Boolean]] = fmap(flip _)(rp)
+  @inline def flip(rp: Rand[Double]): Rand[Rand[Boolean]] = fmap(rp)(flip _)
 
   def uniform[A](xs: A*): Rand[A] = if (xs.isEmpty) never else {
     val p = 1.0 / xs.length
     choose(xs.map((_, p)): _*)
   }
   @inline def uniform[A](rxs: Rand[Seq[A]]): Rand[Rand[A]] =
-    fmap((xs: Seq[A]) => uniform(xs: _*))(rxs)
+    fmap(rxs)(xs => uniform(xs: _*))
 
   /** Condition a probabilistic choice on a Boolean random variable. */
-  @inline def cond[A](rx: => Rand[A], rc: Rand[Boolean]): Rand[A] = bind {
+  @inline def cond[A](rx: => Rand[A], rc: Rand[Boolean]): Rand[A] = bind(rc) {
     c: Boolean => if (c) rx else zero
-  } (rc)
+  }
 
 
   // -- Lifted function applications --
   implicit def liftFun1Fmap[A, B](f: A => B): Rand[A] => Rand[B] =
-    fmap(f) _
+    fmap(_)(f)
   implicit def liftFun1Bind[A, B](f: A => Rand[B]): Rand[A] => Rand[B] =
-    bind(f) _
+    bind(_)(f)
 
 
   // -- Lifted tuple/case class construction --
@@ -72,9 +72,9 @@ trait OddsLang extends OddsIntf with EmbeddedControls {
 
   // -- Lifted logic operations/relations --
   def infix_&&(x: Rand[Boolean], y: => Rand[Boolean]): Rand[Boolean] =
-    bind { c: Boolean => if (c) y else always(false) } (x)
+    bind(x) { c: Boolean => if (c) y else always(false) }
   def infix_||(x: Rand[Boolean], y: => Rand[Boolean]): Rand[Boolean] =
-    bind { c: Boolean => if (c) always(true) else y } (x)
+    bind(x) { c: Boolean => if (c) always(true) else y }
 
   // FIXME: Replace this with YinYang-type VirtualAny/VirtualAnyRef
   def infix_equals[A, B](x:  A,       ry: Rand[B]): Rand[Boolean] =
@@ -92,7 +92,7 @@ trait OddsLang extends OddsIntf with EmbeddedControls {
 
   def __ifThenElse[T](
     cond: Rand[Boolean], tb: => Rand[T], fb: => Rand[T]): Rand[T] =
-    bind { c: Boolean => if (c) tb else fb } (cond)
+    bind(cond) { c: Boolean => if (c) tb else fb }
   // HACK -- bug in scala-virtualized
   override def __ifThenElse[T](cond: => Boolean, tb: => T, fb: => T): T =
     cond match { case true => tb; case false => fb }
@@ -108,9 +108,9 @@ trait OddsLang extends OddsIntf with EmbeddedControls {
    */
   implicit def listRandToRandList[A](l: List[Rand[A]]): Rand[List[A]] =
     l match {
-      case rx :: rxs => bind { x: A =>
-        fmap { xs: List[A] => x :: xs } (listRandToRandList(rxs))
-      } (rx)
+      case rx :: rxs => bind(rx) { x: A =>
+        fmap(listRandToRandList(rxs)) { xs: List[A] => x :: xs }
+      }
       case Nil => unit(Nil)
     }
 }

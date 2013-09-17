@@ -22,14 +22,14 @@ trait ProbMonad[M[+A], D[+A]] extends MonadPlus[M] {
  * an (implicit) instance of [[ProbMonad]].
  */
 object ProbMonad {
-  @inline def fmap[A, B, M[+_], D[+_]](f: A => B)(mx: M[A])(
-    implicit m: ProbMonad[M, D]): M[B] = m.fmap(f)(mx)
+  @inline def fmap[A, B, M[+_], D[+_]](mx: M[A])(f: A => B)(
+    implicit m: ProbMonad[M, D]): M[B] = m.fmap(mx)(f)
   @inline def unit[A, M[+_], D[+_]](x: A)(implicit m: ProbMonad[M, D]): M[A] =
     m.unit(x)
   @inline def join[A, M[+_], D[+_]](mmx: M[M[A]])(
     implicit m: ProbMonad[M, D]): M[A] = m.join(mmx)
-  @inline def bind[A, B, M[+_], D[+_]](f: A => M[B])(mx: M[A])(
-    implicit m: ProbMonad[M, D]): M[B] = m.bind(f)(mx)
+  @inline def bind[A, B, M[+_], D[+_]](mx: M[A])(f: A => M[B])(
+    implicit m: ProbMonad[M, D]): M[B] = m.bind(mx)(f)
   @inline def zero[A, M[+_], D[+_]](implicit m: ProbMonad[M, D]): M[A] =
     m.zero[A]
   @inline def plus[A, M[+_], D[+_]](m1: M[A], m2: M[A])(
