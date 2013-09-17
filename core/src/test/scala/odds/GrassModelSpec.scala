@@ -149,6 +149,25 @@ class GrassModelSpec
   }
 }
 
+class GrassModelRejectionSamplingSpec
+    extends GrassModel
+    with RejectionSampling
+    with OddsPrettyPrint
+    with FlatSpec
+    with ShouldMatchers {
+
+  behavior of "GrassModel"
+
+  it should "show the result of rejection sampling for the lawn model." in {
+    val d = sample(1000)(grassModel)
+    show(d, "rain (rejection sampling)")
+    d foreach {
+      case (false, p) => p should be (0.322  plusOrMinus 1e-1)
+      case (true,  p) => p should be (0.2838 plusOrMinus 1e-1)
+    }
+  }
+}
+
 class GrassModelTreeGenSpec
     extends GrassModel
     with DelayedChoiceTreeGen
