@@ -44,13 +44,34 @@ trait AppendModel extends OddsLang {
   }
 }
 
-trait AppendModelRandomTail extends OddsLang {
+trait RLists extends OddsLang {
 
-  // Now try lists where the tail is itself are a random variable.
-
+  /** Lists with a random tail. */
   sealed abstract class RList[+A] {
 
     def ?::[B >: A](x: B): RList[B] = new ?::(x, always(this))
+
+    def head: A = this match {
+      case RNil    => throw new NoSuchElementException(
+        "head of empty list")
+      case x ?:: _ => x
+    }
+
+    def tail: Rand[RList[A]] = this match {
+      case RNil     => throw new UnsupportedOperationException(
+        "tail of empty list")
+      case _ ?:: xs => xs
+    }
+
+    def isEmpty: Boolean = this match {
+      case RNil    => true
+      case _ ?:: _ => false
+    }
+
+    def length: Rand[Int] = this match {
+      case RNil     => 0
+      case _ ?:: xs => xs.length + 1
+    }
 
     def ++[B >: A](that: RList[B]): RList[B] = this match {
       case RNil     => that
@@ -67,9 +88,26 @@ trait AppendModelRandomTail extends OddsLang {
       case (RNil,     RNil)               => always(true)
       case _                              => always(false)
     }
+
+    def splitAt(n: Int): (Rand[RList[A]], Rand[RList[A]]) =
+      if (n == 0)        (always(RNil), always(this))
+      else this match {
+        case RNil     => (always(this), always(RNil))
+        case x ?:: xs => {
+          val xsp = xs.splitAt(n - 1)
+          (x ?:: xsp._1, xsp._2)
+        }
+      }
   }
   final case object RNil extends RList[Nothing]
   final case class ?::[+A](hd: A, tl: Rand[RList[A]]) extends RList[A]
+
+  // Implicit view for constructing RList's
+  implicit final class AddRlistCons[+A](xs: Rand[RList[A]]) {
+    def ?::[B >: A](x: B): RList[B] = new ?::(x, xs)
+    def ?::[B >: A](rx: Rand[B]): Rand[RList[B]] =
+      Rand { x: B => new ?::(x, xs) } (rx)  // FIXME: Make this simpler...
+  }
 
   // Implicit view to allow conversions from List to RList
   implicit final class AddAsRList[+A](xs: List[A]) {
@@ -87,6 +125,11 @@ trait AppendModelRandomTail extends OddsLang {
   def randomRList(): Rand[RList[Boolean]] =
     if (flip(0.5)) flip(0.5) ?:: randomRList()
     else always(RNil)
+}
+
+trait AppendModelRandomTail extends OddsLang with RLists {
+
+  // Now try lists where the tail is itself are a random variable.
 
   val t3 = List(true, true, true)
   val f2 = List(false, false)

@@ -12,8 +12,12 @@ trait CListOddsLang extends OddsLang {
   // A list where the tail itself is a random var.
   sealed abstract class CList[+A] {
     def length: Rand[Int] = this match {
-      case CNil => always(0)
-      case CCons(hd, tl) => always(1)+tl.length
+      case CNil          => 0
+      case CCons(hd, tl) => tl.length + 1
+    }
+    def isEmpty: Boolean = this match {
+      case CNil          => true
+      case CCons(hd, tl) => false
     }
     def splitAt(n: Int): Rand[(CList[A], CList[A])] = {
       if (n==0) always((CNil, this)) else this match {
@@ -29,8 +33,6 @@ trait CListOddsLang extends OddsLang {
   case object CNil extends CList[Nothing]
   case class CCons[+A](head: A, taill: Rand[CList[A]]) extends CList[A]
 
-  def infix_length[A](rs: Rand[CList[A]]): Rand[Int] =
-    for (s <- rs; n <- s.length) yield n
   def infix_head[A](rs: Rand[CList[A]]): Rand[A] =
     for (s <- rs) yield (s match {
       case CCons(head, tail) => head
@@ -51,12 +53,12 @@ trait CListOddsLang extends OddsLang {
     case CCons(head, tail) => always(CCons(head, lappend(tail, ys)))
   }
   def lobserve[A](s: Rand[CList[A]], l: List[A]): Rand[Boolean] = l match {
-    case Nil    => s.length == 0
+    case Nil    => true when s.isEmpty
     case hd::tl =>
       s flatMap {
         case CNil => never //always(false)
         case CCons(rhd, rtail) =>
-          if (rhd==hd) lobserve(rtail, tl)
+          if (rhd == hd) lobserve(rtail, tl)
           else never //always(false)
       }
   }

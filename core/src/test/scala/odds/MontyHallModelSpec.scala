@@ -10,9 +10,9 @@ trait MontyHallModel extends OddsLang {
   def randomDoor = uniform(1, 2, 3)
 
   // Choose uniformly among remaining doors
-  def remainingDoor(a: Rand[Int], b: Rand[Int]): Rand[Int] = {
-    val remainingDoors = Rand(List)(1, 2, 3) diff Rand(List)(a, b)
-    uniform(remainingDoors)
+  def remainingDoor = Rand { (a: Int, b: Int) =>
+    val remainingDoors = List(1, 2, 3) diff List(a, b)
+    uniform(remainingDoors: _*)
   }
 
   val priceDoor   = randomDoor // the door hiding the price
@@ -35,8 +35,10 @@ trait MontyHallMonadicModel extends OddsLang {
   def randomDoor = uniform(1, 2, 3)
 
   // Choose uniformly among remaining doors
-  def remainingDoor(a: Int, b: Int): Rand[Int] =
-    uniform(List(1, 2, 3) diff List(a, b): _*)
+  def remainingDoor(a: Int, b: Int): Rand[Int] = {
+    val remainingDoors = List(1, 2, 3) diff List(a, b)
+    uniform(remainingDoors: _*)
+  }
 
   def monty = for {
 

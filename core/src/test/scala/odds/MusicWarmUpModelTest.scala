@@ -98,8 +98,9 @@ trait MusicWarmUpModel extends StreamOddsLang with Notes {
           f_tr1 -> 0.2,
           f_tr5 -> 0.1);
         s <- input.uniformSplit;
-        r <- f1(s._1) ++ f2(s._2))
-      yield r
+        l1 <- f1(s._1);
+        l2 <- f2(s._2))
+      yield l1 ++ l2
     }
   }
 
