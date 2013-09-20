@@ -6,6 +6,7 @@ import reflect.macros.TypecheckException
 
 import functors.MonadPlus
 
+
 /**
  * Auto-lifter for [[functors.MonadPlus]].
  *
@@ -90,6 +91,9 @@ object MonadLifter {
     /** The monad type associated with this lifter bundle. */
     val monad: c.Type
 
+    /** An instance of the monad type with underlying type `Any`. */
+    lazy val monadAny = monadInst(typeOf[Any])
+
     /** Construct a monad instance. */
     def monadInst(inner: c.Type): c.Type = {
       appliedType(monad.typeConstructor, List(inner))
@@ -97,24 +101,28 @@ object MonadLifter {
 
     /** Get the type argument of a monad type. */
     def monadTypeArg(monadInstance: c.Type): c.Type = {
-      val mBase = monadInstance.baseType(monad.typeSymbol)
+      val mBase = monadInstance.widen.baseType(monad.typeSymbol)
       mBase match {
         case TypeRef(_, _, List(targ)) => targ
-        //case _ => throw new java.lang.IllegalArgumentException(
         case _ => c.abort(c.enclosingPosition,
           "attempt to get type argument of non-type-reference type '" +
           mBase + "'")
       }
     }
 
+    /** Check if a given type is an instance of `monad`. */
+    def isMonadic(t: c.Type) = t match {
+      case TypeRef(_, _, _ :: _) if t <:< monadAny => true
+      case _                                       => false
+    }
+
     /** Get the number of nested monadic layers of a monad type. */
     def monadDepth(monadInstance: c.Type): Int = {
-      val monadAny = monadInst(typeOf[Any])
-
-      def loop(mInst: c.Type, depth: Int): Int =
-        if (mInst <:< monadAny) loop(monadTypeArg(mInst), depth + 1)
+      def loop(mInst: c.Type, depth: Int): Int = {
+        val mWidened = mInst.widen
+        if (isMonadic(mWidened)) loop(monadTypeArg(mWidened), depth + 1)
         else depth
-
+      }
       loop(monadInstance, 0)
     }
 
@@ -155,16 +163,16 @@ object MonadLifter {
      * call.
      *
      * @param mtd the name of the callee.
+     * @param retDepth the expected monadic depth of the return type of
+     *   the resulting call.
      * @param args the arguments to the call and their types.  The first
      *   argument must be the receiver object of the method call.
      * @param targs the type arguments of the call.
-     * @param rtype the expected monadic return type of the resulting
-     *   call.
      * @return the tree of the lifted call.
      */
     def lift(
-      mtd: c.Name, args: List[(c.Tree, c.Type)], targs: List[c.Type],
-      rtype: c.Type): c.Tree = {
+      mtd: c.Name, retDepth: Int, args: List[(c.Tree, c.Type)] = Nil,
+      targs: List[c.Type] = Nil): c.Tree = {
 
       def mkCall(mtd: c.Name, args: List[c.Tree], targs: List[c.Type]) = {
         val callee = Select(args.head, mtd)
@@ -176,7 +184,6 @@ object MonadLifter {
         else Apply(calleeAndTypes, mtdArgs)   // Application
       }
 
-      val monadAny = monadInst(typeOf[Any])
       val (mtdArgs, bindArgss) = args.map { case (arg, atype) =>
         // Compute the types for the closure arguments and the terms
         // to pass to the corresponding `bind`/`fmap` calls.  If the
@@ -184,7 +191,7 @@ object MonadLifter {
         // otherwise don't lift the corresponding argument but pass it
         // directly to the nested call.
         val atypeWidened = atype.widen
-        if (atypeWidened <:< monadAny) {
+        if (isMonadic(atypeWidened)) {
           // Allocate a term name (and identifier) for the
           // corresponding argument of the closure passed to
           // `bind`/`fmap`.
@@ -205,7 +212,6 @@ object MonadLifter {
       val nCall = mkCall(mtd, mtdArgNames, targs)
 
       val mClassInst = monadClassInst
-      val retDepth = monadDepth(rtype)
       if (bindArgs.isEmpty) {                   // No arguments to lift
         if (retDepth == 0) nCall                // No lifting expected
         else q"$mClassInst.unit { $nCall }"     // Trivial lifting
@@ -257,208 +263,78 @@ object MonadLifter {
     }
   }
 
+  /**
+   * Lift an operation into a given monad.
+   *
+   * @tparam R the return type of the operation.
+   * @param monadType the monad type to lift the operation into.
+   * @param recType the type of the receiver of the operation.
+   * @param opName the name of the operation to lift.
+   * @param args the arguments of the operation to lift.  The first
+   *   argument must be the receiver of the method call.
+   * @param targs the type arguments of the operation to lift.
+   * @param ropName the name of an alternate operation to use on deep
+   *   receivers (i.e. receivers of type M[M[_]]).  This is an
+   *   optional parameter: if its value is `None`, the value of
+   *   `opName` will be used (default); if its value is `Some(n)`, `n`
+   *   will be used.
+   */
+  def liftOp[R](c: Context)(monadType: c.Type)(
+    opName: String, args: List[c.Expr[Any]] = Nil, targs: List[c.Type] = Nil,
+    ropName: Option[String] = None): c.Expr[R] = {
+
+    import c.universe._
+
+    val lb = new LifterBundle[c.type](c) { val monad = monadType }
+
+    // Get the receiver and argument types from the corresponding
+    // trees and determine the monadic depth of the receiver type.
+    val recType = args.head.actualType
+    val recDepth = lb.monadDepth(recType)
+    val args1 = args.toList.map(a => (a.tree, a.actualType))
+    val mtdName = if (recDepth <= 1) opName else ropName match {
+      case Some(on) => on
+      case None     => opName
+    }
+
+    // Get the method name: `mtdName` may contain punctuation
+    // characters, so use the parser to convert it into a valid name.
+    val Ident(mtd) = c.parse(mtdName)
+
+    // Lift the method call
+    val liftedTree = lb.lift(mtd, recDepth, args1, targs)
+    println(s"=== LIFTED METHOD CALL (${c.enclosingPosition})")
+    println("== Before expansion: " + c.macroApplication)
+
+    println(s"== Before typing:\n$liftedTree")
+
+    // Type check the tree to catch lifting errors
+    val typedTree = lb.typeCheck(liftedTree)
+    println(s"== After typing:\n$typedTree")
+
+    // The compiler might transform the lifted tree further before
+    // re-typing it.  These transformations might introduce new terms
+    // that aren't typed yet, leading to a partially typed tree.  To
+    // make sure the transformed tree will be properly re-typed, we
+    // need to reset symbols and attributes of the tree we return.
+    c.Expr[R](c.resetAllAttrs(typedTree))
+  }
+
   /** Dynamic macro handler. */
   private object Handler extends DynamicMacro.Handler {
 
     /** Handler for `applyDynamic` calls. */
-    override def applyDynamic[M](c: Context)(name: String)(
-      args: List[c.Tree])(targs: List[c.Type]): c.Expr[M] = {
-
-      import c.universe._
-      val lb = new LifterBundle[c.type](c) { val monad = targs.head }
-
-      val Ident(mtd) = c.parse(name)
-      val rterm = c.prefix.tree
-      val args1 = (rterm, rterm.tpe) :: args.map(a => (a, a.tpe))
-      c.Expr(lb.typeCheck(lb.lift(mtd, args1, targs.tail, rterm.tpe)))
+    override def applyDynamic[M: c.WeakTypeTag](c: Context)(
+      name: String, args: List[c.Expr[Any]], targs: List[c.Type]): c.Expr[M] = {
+      liftOp(c)(implicitly[c.WeakTypeTag[M]].tpe)(name, c.prefix :: args, targs)
     }
 
     // FIMXE: Implement handler for `applyDynamicNamed` calls.
 
     /** Handler for `selectDynamic` calls. */
-    override def selectDynamic[M](c: Context)(name: String)(
-      targs: List[c.Type]): c.Expr[M] = {
-
-      import c.universe._
-      val lb = new LifterBundle[c.type](c) { val monad = targs.head }
-
-      val Ident(member) = c.parse(name)
-      val rterm = c.prefix.tree
-      val receiver = List((rterm, rterm.tpe))
-      c.Expr(lb.typeCheck(lb.lift(member, receiver, targs.tail, rterm.tpe)))
-    }
-  }
-}
-
-
-/**
- * Type class for lifting products into the monadic domain.
- *
- * ==For categorists==
- * This type class essentially represents the ''strength'' (and
- * ''costrength'') of the monad `M`, in that it allows lifting
- * products `(A, M[B])` to `M[(A, B)]`.  It also covers the
- * generalized case for finite products.
- *
- * @tparam M the monad type.
- * @tparam P the product type before lifting.
- */
-trait MonadicProduct[M[+_], P <: Product] {
-
-  /**
-   * The underling product type of the monadic product represented by
-   * the this type class instance.
-   */
-  type Inner <: Product
-
-  /**
-   * Lift a product into the monadic domain.
-   *
-   * @tparam P the product type before lifting.
-   * @param p the product to lift.
-   * @return A product of type `M[Inner]` where `Inner` is the
-   *   underling product type of monad instances represented by this
-   *   type class instance.
-   */
-  def lift(p: P): M[Inner]
-}
-
-/** Companion object of [[MonadicProduct]] trait. */
-object MonadicProduct {
-
-  /**
-   * Fallback instance of [[MonadicProduct]] for trivial lifting.
-   *
-   * The underlying product type `Inner` is just the product type `P`
-   * prior to lifting, and the lifting operation is just the monadic
-   * `unit` operation.
-   */
-  final class Trivial[M[+_], P <: Product](implicit mp: MonadPlus[M])
-      extends MonadicProduct[M, P] {
-    type Inner = P
-    def lift(p: P): M[P] = mp.unit(p)
-  }
-
-  /**
-   * Materialize a type class instance of [[MonadicProduct]] for the
-   * given monad and product type.
-   *
-   * @tparam M the monad type to lift products to.
-   * @tparam P the product type before lifting.
-   */
-  implicit def materialize[M[+_], P <: Product]: MonadicProduct[M, P] =
-    macro materializeImpl[M, P]
-
-  /** Macro implementation of [[MonadicProduct.materialize]]. */
-  def materializeImpl[M[+_], P <: Product](c: Context)(
-    implicit mt: c.WeakTypeTag[M[_]], pt: c.WeakTypeTag[P])
-      : c.Expr[MonadicProduct[M, P]] = {
-
-    val mb = new MaterializerBundle[c.type, M, P](c) {
-      val monad = mt.tpe
-      val ptype = pt.tpe
-    }
-    mb.materialize
-  }
-
-  /**
-   * Convenience class for bundling macro implementations.
-   *
-   * @tparam C the type of the context `c`.
-   * @tparam M the monad type to lift products to.
-   * @tparam P the product type before lifting.
-   * @param c The context of the macro call associated with this bundle.
-   */
-  abstract class MaterializerBundle[C <: Context, M[+_], P <: Product](
-    val c: C) {
-
-    import c.universe._
-
-    val monad: c.Type
-    val ptype: c.Type
-
-    lazy val lb = new MonadLifter.LifterBundle[c.type](c) {
-      val monad = MaterializerBundle.this.monad
-    }
-
-    /** Materialize an instance of [[MonadicProduct.Trivial]]. */
-    def materializeTrivial: c.Expr[MonadicProduct[M, P]] = {
-      val triv = appliedType(
-        weakTypeOf[Trivial[M, P]].typeConstructor,
-        List(monad, ptype))
-      c.Expr(q"new $triv")
-    }
-
-    /**
-     * Materialize a type class instance of [[MonadicProduct]] for the
-     * given monad and product type.
-     */
-    def materialize: c.Expr[MonadicProduct[M, P]] = {
-
-      // If this product type is not a case class, fall back to trivial
-      // lifting (i.e. through the monadic `unit` operation).
-      val ptypeSym = ptype.typeSymbol
-      if (!ptypeSym.isClass || !ptypeSym.asClass.isCaseClass) {
-        materializeTrivial
-      } else {
-
-        // Get the symbol of the companion object and the names/types of
-        // the fields of the product class.
-        val pcompSym = ptype.typeSymbol.asClass.companionSymbol
-        val pfields = ptype.declarations.toList.collect {
-          case f: TermSymbol if f.isVal && f.isCaseAccessor =>
-            (newTermName(f.name.toString.trim), f.typeSignatureIn(ptype))
-        }
-
-        // Find the "deepest" field type.  If the depth of that field
-        // is 0, then none of the fields are monadic, and we can fall
-        // back to trivial lifting.  Otherwise, use the type of that
-        // field to compute an upper bound of the result type of the
-        // `lift` method.
-        val depths = pfields.map { f => (f._2, lb.monadDepth(f._2)) }
-        val deepest = if (depths.isEmpty) (NoType, 0) else depths maxBy (_._2)
-        if (deepest._2 == 0) materializeTrivial else {
-
-          val retType = appliedType(deepest._1.typeConstructor, List(typeOf[Any]))
-
-          // Compute the arguments (and their types) for the call to
-          // the underlying product factory method from the fields of
-          // the product class.
-          val pname = newTermName(c.fresh("p$"))
-          val (pargs, paterms) = pfields.map {
-            case (fname, ftype) =>
-              (ValDef(Modifiers(Flag.PARAM), fname, TypeTree(ftype), EmptyTree),
-                (q"$pname.$fname", ftype))
-          }.unzip
-
-          // Lift the call to the product factory method.
-          val call = lb.lift(
-            newTermName("apply"),
-            (Ident(pcompSym), pcompSym.typeSignature) :: paterms,
-            Nil, retType)
-
-          // Type check the lifted call to the factory method in order
-          // to get the return type of the `lift` method and the
-          // `Inner` type we are about to materialize.
-          val dummy = q"(($pname: $ptype) => $call)"
-          val Function(_, typedCall) = lb.typeCheck(dummy)
-          val callType = typedCall.tpe
-          val innerType = lb.monadTypeArg(typedCall.tpe)
-
-          // Since `call` has just been type checked, we need to reset
-          // its symbols and types so the type checker will properly
-          // recheck it after macro expansion.
-          val call1 = c.resetAllAttrs(call)
-
-          // Materialize the `lift` method and instantiate the type
-          // class.
-          val liftMtd = q"def lift($pname: $ptype): $callType = $call1"
-          val parent = appliedType(
-            weakTypeOf[MonadicProduct[M, P]].typeConstructor,
-            List(monad, ptype))
-          c.Expr(q"new $parent { type Inner = $innerType; $liftMtd }")
-        }
-      }
+    override def selectDynamic[M: c.WeakTypeTag](c: Context)(
+      name: String, targs: List[c.Type]): c.Expr[M] = {
+      liftOp(c)(implicitly[c.WeakTypeTag[M]].tpe)(name, List(c.prefix), targs)
     }
   }
 }

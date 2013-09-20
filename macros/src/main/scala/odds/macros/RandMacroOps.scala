@@ -13,6 +13,26 @@ package macros
 trait RandMacroOps[R[+_]] {
 
   /**
+   * Condition this random variable on an observation.
+   *
+   * Use case:
+   *
+   * {{{
+   *     val coin1 = flip(0.5)
+   *     val coin2 = flip(0.5)
+   *     val both  = coin1 && coin2
+   *
+   *     // conditional probability: P(both | coin1) = P(coin2)
+   *     both when coin1
+   * }}}
+   *
+   * @param cond the observation (random variable) to condition on.
+   * @return the conditional probability of `this` given `cond`,
+   *         i.e. `P(this | cond)`
+   */
+  def when(cond: R[Any]): R[Any] = macro RandMacroOps.when[R[Any]]
+
+  /**
    * Macro for generic `+` operation on random variables.
    *
    * This macro is necessary because any value (and hence any random
@@ -29,67 +49,63 @@ trait RandMacroOps[R[+_]] {
    *
    * @param that the value that `this` should be added to.
    */
-  def +(that: Any): R[Any] = macro RandMacroOps.+[R]
+  def +(that: Any): R[Any] = macro RandMacroOps.+[R[Any]]
 
   /** Compare two random variables for equality. */
-  def __equals(that: Any): R[Any] = macro RandMacroOps.__equals[R]
+  def __equals(that: Any): R[Any] = macro RandMacroOps.__equals[R[Any]]
 
   /** Compare two random variables for equality. */
-  def __==(that: Any): R[Any] = macro RandMacroOps.__==[R]
+  def __==(that: Any): R[Any] = macro RandMacroOps.__==[R[Any]]
 
   /** Compare two random variables for inequality. */
-  def __!=(that: Any): R[Any] = macro RandMacroOps.__!=[R]
+  def __!=(that: Any): R[Any] = macro RandMacroOps.__!=[R[Any]]
 
   /** Convert a random variable into a (random) string. */
-  def __toString: R[Any] = macro RandMacroOps.__toString[R]
+  def __toString: R[Any] = macro RandMacroOps.__toString[R[Any]]
 }
 
 /** Companion object of the [[RandMacroOps]] trait. */
 private object RandMacroOps {
 
   import reflect.macros.Context
+  import MonadLifter.liftOp
+  import VirtualAny.liftAnyOp
+  import VirtualControls.liftIfThenElse
 
-  /** Lift an operation into `R[_]`. */
-  def liftOp[R[+_]](c: Context)(
-    rop: String, op: String, rtype: c.Type, args: c.Expr[Any]*)(
-    implicit rt: c.WeakTypeTag[R[_]]): c.Expr[R[Any]] = {
+  /** Condition a random variable on an observation. */
+  def when[R](c: Context)(cond: c.Expr[Any])(
+    implicit rt: c.WeakTypeTag[R]): c.Expr[R] = {
 
     import c.universe._
-    import MonadLifter._
-
-    val lb = new LifterBundle[c.type](c) { val monad = rt.tpe }
-    val args1 = args.toList.map(a => (a.tree, a.actualType))
-    val innerOp = if (lb.monadDepth(rtype) <= 1) op else rop
-    c.Expr(lb.lift(newTermName(innerOp), args1, Nil, rtype))
+    val lb = new MonadLifter.LifterBundle[c.type](c) { val monad = rt.tpe }
+    val zeroTree = lb.typeCheck(q"${lb.monadClassInst}.zero")
+    val zeroExpr = c.Expr[R](zeroTree)
+    val thisExpr = c.Expr[R](c.prefix.tree)
+    VirtualControls.liftIfThenElse(c)(rt.tpe)(cond, thisExpr, zeroExpr)
   }
 
   /** Generic '+' operation on random variables. */
-  def +[R[+_]](c: Context)(that: c.Expr[Any])(
-    implicit rt: c.WeakTypeTag[R[_]]): c.Expr[R[Any]] = {
-    liftOp(c)("$plus", "$plus", c.prefix.actualType, c.prefix, that)
+  def +[R: c.WeakTypeTag](c: Context)(that: c.Expr[Any]): c.Expr[R] = {
+    liftOp(c)(implicitly[c.WeakTypeTag[R]].tpe)("$plus", List(c.prefix, that))
   }
 
   /** Compare two random variables for equality. */
-  def __equals[R[+_]](c: Context)(that: c.Expr[Any])(
-    implicit rt: c.WeakTypeTag[R[_]]): c.Expr[R[Any]] = {
-    liftOp(c)("__equals", "equals", c.prefix.actualType, c.prefix, that)
+  def __equals[R: c.WeakTypeTag](c: Context)(that: c.Expr[Any]): c.Expr[R] = {
+    liftAnyOp(c)(implicitly[c.WeakTypeTag[R]].tpe)("equals", List(c.prefix, that))
   }
 
   /** Compare two random variables for equality. */
-  def __==[R[+_]](c: Context)(that: c.Expr[Any])(
-    implicit rt: c.WeakTypeTag[R[_]]): c.Expr[R[Any]] = {
-    liftOp(c)("__$eq$eq", "$eq$eq", c.prefix.actualType, c.prefix, that)
+  def __==[R: c.WeakTypeTag](c: Context)(that: c.Expr[Any]): c.Expr[R] = {
+    liftAnyOp(c)(implicitly[c.WeakTypeTag[R]].tpe)("==", List(c.prefix, that))
   }
 
   /** Compare two random variables for inequality. */
-  def __!=[R[+_]](c: Context)(that: c.Expr[Any])(
-    implicit rt: c.WeakTypeTag[R[_]]): c.Expr[R[Any]] = {
-    liftOp(c)("__$bang$eq", "$bang$eq", c.prefix.actualType, c.prefix, that)
+  def __!=[R: c.WeakTypeTag](c: Context)(that: c.Expr[Any]): c.Expr[R] = {
+    liftAnyOp(c)(implicitly[c.WeakTypeTag[R]].tpe)("!=", List(c.prefix, that))
   }
 
   /** Convert a random variable into a (random) string. */
-  def __toString[R[+_]](c: Context)(
-    implicit rt: c.WeakTypeTag[R[_]]): c.Expr[R[Any]] = {
-    liftOp(c)("__toString", "toString", c.prefix.actualType, c.prefix)
+  def __toString[R: c.WeakTypeTag](c: Context): c.Expr[R] = {
+    liftAnyOp(c)(implicitly[c.WeakTypeTag[R]].tpe)("toString", List(c.prefix))
   }
 }

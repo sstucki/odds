@@ -1,7 +1,7 @@
 package ch.epfl.lamp.odds
 package inference
 
-import internal.DelayedChoiceIntf
+import internal.{ DelayedChoiceIntf, OddsIntf }
 
 import collection.mutable
 

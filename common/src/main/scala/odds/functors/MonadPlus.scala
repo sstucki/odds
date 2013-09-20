@@ -85,7 +85,7 @@ package functors
  *
  * @tparam M the Scala type representing the functor of the monad.
  */
-trait MonadPlus[M[+A]] {
+trait MonadPlus[M[+_]] {
 
   /** The Scala type representing the functor of the monad. */
   type FType[+A] = M[A]

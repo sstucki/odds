@@ -3,7 +3,7 @@ package functors
 
 
 /** Probability Monad type class. */
-trait ProbMonad[M[+A], D[+A]] extends MonadPlus[M] {
+trait ProbMonad[M[+_], D[+_]] extends MonadPlus[M] {
 
   /** Random variable type. */
   type Rand[+A] = M[A]

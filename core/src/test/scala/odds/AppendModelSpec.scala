@@ -90,8 +90,10 @@ trait RLists extends OddsLang {
     }
 
     def splitAt(n: Int): (Rand[RList[A]], Rand[RList[A]]) =
-      if (n == 0)        (always(RNil), always(this))
-      else this match {
+      // if (n == 0)        (always(RNil), always(this))
+      // else this match {  // FIXME!
+      this match {
+        case _ if n == 0 =>        (always(RNil), always(this))
         case RNil     => (always(this), always(RNil))
         case x ?:: xs => {
           val xsp = xs.splitAt(n - 1)
@@ -106,7 +108,7 @@ trait RLists extends OddsLang {
   implicit final class AddRlistCons[+A](xs: Rand[RList[A]]) {
     def ?::[B >: A](x: B): RList[B] = new ?::(x, xs)
     def ?::[B >: A](rx: Rand[B]): Rand[RList[B]] =
-      Rand { x: B => new ?::(x, xs) } (rx)  // FIXME: Make this simpler...
+      Rand.bind(rx) { x => new ?::(x, xs) }   // FIXME: Make this simpler...
   }
 
   // Implicit view to allow conversions from List to RList

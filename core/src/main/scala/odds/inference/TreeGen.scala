@@ -1,7 +1,7 @@
 package ch.epfl.lamp.odds
 package inference
 
-import internal.{ CommittedChoice, DelayedChoiceIntf }
+import internal.{ CommittedChoice, DelayedChoiceIntf, OddsIntf }
 
 /** Basic tree generator interface. */
 trait TreeGenIntf {

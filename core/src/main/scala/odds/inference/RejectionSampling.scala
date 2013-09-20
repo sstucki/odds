@@ -2,7 +2,7 @@ package ch.epfl.lamp.odds
 package inference
 
 import functors.ProbMonad
-import internal.DelayedChoiceIntf
+import internal.OddsIntf
 
 import scala.collection.mutable
 
