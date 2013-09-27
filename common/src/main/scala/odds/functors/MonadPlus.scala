@@ -181,7 +181,6 @@ trait MonadPlus[M[+_]] {
   /** Implicit view as a Scala collection. */
   implicit final class ToScalaMonadic[+A](mx: M[A]) {
 
-    //@inline def ++[B >: A](my: M[B]): M[B] = plus(mx, my)
     @inline def map[B](f: A => B): M[B] = fmap(mx)(f)
     @inline def filter(p: A => Boolean): M[A] = bind(mx) { x =>
       if (p(x)) unit(x) else zero
