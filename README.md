@@ -55,7 +55,9 @@ docs in the `core/target/scala-2.10/api/` directory.
 
 Our [Scala'13 paper](http://dx.doi.org/10.1145/2489837.2489848) also
 contains an introduction to Odds and describes the principles it is
-built on.
+built on.  The source code of Odds has changed quite a bit since
+Scala'13, but the original source code (on which the paper was based)
+is available [here](https://github.com/sstucki/odds/tree/scala13).
 
 
 Source code
