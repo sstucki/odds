@@ -1,4 +1,4 @@
-Odds
+Odds [![Build Status](https://travis-ci.org/sstucki/odds.png?branch=master)](https://travis-ci.org/sstucki/odds)
 ====
 
 Probabilistic programming in Scala
