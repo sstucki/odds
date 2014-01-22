@@ -1,6 +1,6 @@
 package ch.epfl.lamp.odds
 
-import org.scalatest.FlatSpec
+import org.scalatest.FlatSpecLike
 
 import inference._
 
@@ -90,7 +90,7 @@ class CMusicModelLocalImportanceSamplingTest
     extends CMusicModel
     with LocalImportanceSampling
     with OddsPrettyPrint
-    with FlatSpec {
+    with FlatSpecLike {
 
   behavior of "MusicModel with local important sampling"
 
@@ -109,7 +109,7 @@ class CMusicModelTreeGenTest
     extends CMusicModel
     with DelayedChoiceTreeGen
     with OddsPrettyPrint
-    with FlatSpec {
+    with FlatSpecLike {
 
   behavior of "MusicModel with local important sampling"
 

@@ -17,8 +17,8 @@ http://okmij.org/ftp/kakuritu/blip/colored_balls.ml
 
 package ch.epfl.lamp.odds
 
-import org.scalatest.FlatSpec
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.FlatSpecLike
+import org.scalatest.Matchers
 
 import inference._
 
@@ -82,7 +82,7 @@ trait ColoredBallsModel extends OddsLang {
   }
 }
 
-class ColoredBallsPaperTest extends FlatSpec with ShouldMatchers {
+class ColoredBallsPaperTest extends FlatSpecLike with Matchers {
   trait ColoredBalls extends ColoredBallsModel with OddsPrettyPrint {
     val observations = (1 to 10).map(_ => Blue)
     def ask1 = model_nballs(observations)
@@ -103,7 +103,7 @@ class ColoredBallsPaperTest extends FlatSpec with ShouldMatchers {
   }
 }
 
-class ColoredBallsModelTest extends FlatSpec with ShouldMatchers {
+class ColoredBallsModelTest extends FlatSpecLike with Matchers {
   behavior of "Colored Balls Model"
 
   it should "reproduce the experimental results from Milch et al paper" in {

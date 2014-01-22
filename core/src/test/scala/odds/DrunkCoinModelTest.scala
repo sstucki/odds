@@ -1,7 +1,7 @@
 package ch.epfl.lamp.odds
 
-import org.scalatest.FlatSpec
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.FlatSpecLike
+import org.scalatest.Matchers
 
 import inference._
 
@@ -28,8 +28,8 @@ trait DrunkCoinModel extends OddsLang {
 
 
 class DrunkCoinModelTest
-    extends FlatSpec
-    with ShouldMatchers {
+    extends FlatSpecLike
+    with Matchers {
 
   behavior of "LocalImportanceSampling"
 

@@ -2,8 +2,8 @@ package ch.epfl.lamp.odds
 
 import language.implicitConversions
 
-import org.scalatest.FlatSpec
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.FlatSpecLike
+import org.scalatest.Matchers
 
 import inference._
 
@@ -163,8 +163,8 @@ class AppendModelSpec
     extends AppendModel
     with DepthBoundInference
     with OddsPrettyPrint
-    with FlatSpec
-    with ShouldMatchers {
+    with FlatSpecLike
+    with Matchers {
 
   behavior of "AppendModel"
 
@@ -188,7 +188,7 @@ class AppendModelSpec
     val (d, e) = reify(5)(appendModel3)
     show(d, "appendModel3")
     d.size should be >= 5
-    d should contain (t3, 0.5)
+    d.toStream should contain (t3, 0.5)
     d foreach {
       case (l, _) => l.take(3) should equal (t3)
     }
@@ -235,8 +235,8 @@ class AppendModelRandomTailSpec
     extends AppendModelRandomTail
     with DepthBoundInference
     with OddsPrettyPrint
-    with FlatSpec
-    with ShouldMatchers {
+    with FlatSpecLike
+    with Matchers {
 
   it should "show the results of appendModel1" in {
     val (d, e) = reify(1000)(appendModel1)
@@ -258,7 +258,7 @@ class AppendModelRandomTailSpec
     val (d, e) = reify(5)(appendModel3)
     show(d, "appendModel3")
     d.size should be >= 5
-    d should contain (t3, 0.5)
+    d.toStream should contain (t3, 0.5)
     d foreach {
       case (l, _) => l.take(3) should equal (t3)
     }

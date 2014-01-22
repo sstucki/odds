@@ -1,7 +1,7 @@
 package ch.epfl.lamp.odds
 
-import org.scalatest.FlatSpec
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.FlatSpecLike
+import org.scalatest.Matchers
 
 import inference._
 
@@ -118,7 +118,7 @@ class MusicWarmUpModelSampleTest
     extends MusicWarmUpModel
     with RejectionSampling
     with OddsPrettyPrint
-    with FlatSpec {
+    with FlatSpecLike {
 
   behavior of "MusicWarmUpModel with RejectionSampling"
 
@@ -132,8 +132,8 @@ class MusicWarmUpModelExactTest
     extends MusicWarmUpModel
     with ExactInference
     with OddsPrettyPrint
-    with FlatSpec
-    with ShouldMatchers {
+    with FlatSpecLike
+    with Matchers {
 
   behavior of "MusicWarmUpModel with Exact Inference"
 
