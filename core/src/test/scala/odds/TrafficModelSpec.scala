@@ -84,8 +84,8 @@ class TrafficModelSpec
     val d = reify(crash(cautiousDriver, aggressiveDriver, trafficLight))
     show(d, "trafficModel1")
     d foreach {
-      case (Crash,   p) => p should be (0.0369 plusOrMinus 1e-11)
-      case (NoCrash, p) => p should be (0.9631 plusOrMinus 1e-11)
+      case (Crash,   p) => p should be (0.0369 +- 1e-11)
+      case (NoCrash, p) => p should be (0.9631 +- 1e-11)
     }
   }
 
@@ -93,8 +93,8 @@ class TrafficModelSpec
     val d = reify(crash(aggressiveDriver, cautiousDriver, trafficLight))
     show(d, "trafficModel2")
     d foreach {
-      case (Crash,   p) => p should be (0.045 plusOrMinus 1e-11)
-      case (NoCrash, p) => p should be (0.955 plusOrMinus 1e-11)
+      case (Crash,   p) => p should be (0.045 +- 1e-11)
+      case (NoCrash, p) => p should be (0.955 +- 1e-11)
     }
   }
 
@@ -102,8 +102,8 @@ class TrafficModelSpec
     val d = reify(crash(aggressiveDriver, aggressiveDriver, trafficLight))
     show(d, "trafficModel3")
     d foreach {
-      case (Crash,   p) => p should be (0.0891 plusOrMinus 1e-11)
-      case (NoCrash, p) => p should be (0.9109 plusOrMinus 1e-11)
+      case (Crash,   p) => p should be (0.0891 +- 1e-11)
+      case (NoCrash, p) => p should be (0.9109 +- 1e-11)
     }
   }
 }

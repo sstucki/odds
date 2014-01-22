@@ -38,8 +38,8 @@ class DrunkCoinModelTest
       val d = reify(dcoinAnd(10))
       show(d, "dcointAnd(10), exact")
       d foreach {
-        case (false, p) => p should be (5.263157894e-2  plusOrMinus 1e-11)
-        case (true, p) =>  p should be (9.765624999e-14 plusOrMinus 1e-23)
+        case (false, p) => p should be (5.263157894e-2  +- 1e-11)
+        case (true, p) =>  p should be (9.765624999e-14 +- 1e-23)
       }
     }
   }
@@ -49,8 +49,8 @@ class DrunkCoinModelTest
       val d = sample(5000, 4)(dcoinAnd(10))
       show(d, "dcoinAnd(10), local importance sampling")
       d foreach {
-        case (false, p) => p should be (5.263157894e-2  plusOrMinus 1e-4)
-        case (true, p) =>  p should be (9.765624999e-14 plusOrMinus 1e-13)
+        case (false, p) => p should be (5.263157894e-2  +- 1e-4)
+        case (true, p) =>  p should be (9.765624999e-14 +- 1e-13)
       }
     }
   }
