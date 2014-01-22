@@ -1,6 +1,6 @@
 package ch.epfl.lamp.odds
 
-import org.scalatest.FlatSpec
+import org.scalatest.FlatSpecLike
 
 import inference._
 
@@ -110,7 +110,7 @@ class MusicModelSampleTest
     extends MusicModel
     with RejectionSampling
     with OddsPrettyPrint
-    with FlatSpec {
+    with FlatSpecLike {
 
   behavior of "MusicModel with RejectionSampling"
 
@@ -131,7 +131,7 @@ class MusicModelDepthBoundTest
     extends MusicModel
     with DepthBoundInference
     with OddsPrettyPrint
-    with FlatSpec {
+    with FlatSpecLike {
 
   behavior of "MusicModel with depth bound Inference"
 
@@ -145,7 +145,7 @@ class MusicModelLocalImportanceSamplingTest
     extends MusicModel
     with LocalImportanceSampling
     with OddsPrettyPrint
-    with FlatSpec {
+    with FlatSpecLike {
 
   behavior of "MusicModel with local important sampling"
 

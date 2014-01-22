@@ -1,7 +1,7 @@
 package ch.epfl.lamp.odds
 
-import org.scalatest.FlatSpec
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.FlatSpecLike
+import org.scalatest.Matchers
 
 import scala.language.postfixOps
 
@@ -71,8 +71,8 @@ class CoffeeModelTest
     extends CoffeeModel
     with ExactInference
     with OddsPrettyPrint
-    with FlatSpec
-    with ShouldMatchers {
+    with FlatSpecLike
+    with Matchers {
 
   behavior of "CoffeeModel"
 

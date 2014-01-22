@@ -1,7 +1,7 @@
 package ch.epfl.lamp.odds
 
-import org.scalatest.FlatSpec
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.FlatSpecLike
+import org.scalatest.Matchers
 
 import inference._
 
@@ -9,8 +9,8 @@ class CoinModelTest
     extends OddsLang
     with ExactInference
     with OddsPrettyPrint
-    with FlatSpec
-    with ShouldMatchers {
+    with FlatSpecLike
+    with Matchers {
 
   import Rand.ToScalaMonadic
 

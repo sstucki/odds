@@ -1,7 +1,7 @@
 package ch.epfl.lamp.odds
 
-import org.scalatest.FlatSpec
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.FlatSpecLike
+import org.scalatest.Matchers
 
 import inference._
 
@@ -65,8 +65,8 @@ class TrafficModelSpec
     extends TrafficModel
     with ExactInference
     with OddsPrettyPrint
-    with FlatSpec
-    with ShouldMatchers {
+    with FlatSpecLike
+    with Matchers {
 
   behavior of "TrafficModel"
 

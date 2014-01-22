@@ -1,7 +1,7 @@
 package ch.epfl.lamp.odds
 
-import org.scalatest.FlatSpec
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.FlatSpecLike
+import org.scalatest.Matchers
 
 import inference._
 
@@ -123,8 +123,8 @@ class GrassModelSpec
     extends GrassModel
     with ExactInference
     with OddsPrettyPrint
-    with FlatSpec
-    with ShouldMatchers {
+    with FlatSpecLike
+    with Matchers {
 
   behavior of "GrassModel"
 
@@ -153,8 +153,8 @@ class GrassModelRejectionSamplingSpec
     extends GrassModel
     with RejectionSampling
     with OddsPrettyPrint
-    with FlatSpec
-    with ShouldMatchers {
+    with FlatSpecLike
+    with Matchers {
 
   behavior of "GrassModel"
 
@@ -171,8 +171,8 @@ class GrassModelRejectionSamplingSpec
 class GrassModelTreeGenSpec
     extends GrassModel
     with DelayedChoiceTreeGen
-    with FlatSpec
-    with ShouldMatchers {
+    with FlatSpecLike
+    with Matchers {
 
   behavior of "DelayedChoiceTreeGen"
 

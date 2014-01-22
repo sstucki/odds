@@ -1,7 +1,7 @@
 package ch.epfl.lamp.odds
 
-import org.scalatest.FlatSpec
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.FlatSpecLike
+import org.scalatest.Matchers
 
 import inference._
 
@@ -61,8 +61,8 @@ class MontyHallModelSpec
     extends MontyHallModel
     with ExactInference
     with OddsPrettyPrint
-    with FlatSpec
-    with ShouldMatchers {
+    with FlatSpecLike
+    with Matchers {
 
   behavior of "MontyHallModel"
 
@@ -89,8 +89,8 @@ class MontyHallMonadicModelSpec
     extends MontyHallMonadicModel
     with ExactInference
     with OddsPrettyPrint
-    with FlatSpec
-    with ShouldMatchers {
+    with FlatSpecLike
+    with Matchers {
 
   behavior of "MontyHallMonadicModel"
 
