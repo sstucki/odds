@@ -54,6 +54,8 @@ trait RandOps { this: OddsIntf =>
 
   private val randomGenerator = new java.util.Random
 
+  def uniform(lower: Double = 0.0, upper: Double = 1.0): Rand[Double] = always(lower + (upper - lower) * randomGenerator.nextDouble)
+
   def normal: Rand[Double] = always(randomGenerator.nextGaussian)
 
   def uniform[A](xs: A*): Rand[A] = if (xs.isEmpty) never else {
