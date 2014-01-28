@@ -49,34 +49,34 @@ trait MusicWarmUpModel extends StreamOddsLang with Notes {
 
   // Transpose a note by 1 interval
   def transpose1(n: Note) = n match {
-    case C      => choice(Csharp -> 0.3, D -> 0.6, Dsharp -> 0.1)
-    case Csharp => choice(D -> 0.4, Dsharp -> 0.6)
-    case D      => choice(Dsharp -> 0.3, E -> 0.7)
-    case Dsharp => choice(E -> 0.7, F -> 0.3)
-    case E      => choice(F -> 0.6, Fsharp -> 0.4)
-    case F      => choice(Fsharp -> 0.3, G -> 0.6, Gsharp -> 0.1)
-    case Fsharp => choice(G -> 0.4, Gsharp -> 0.6)
-    case G      => choice(Gsharp -> 0.3, A -> 0.6, Asharp -> 0.1)
-    case Gsharp => choice(A -> 0.4, Asharp -> 0.6)
-    case A      => choice(Asharp -> 0.3, B -> 0.7)
-    case Asharp => choice(B -> 0.7, C -> 0.3)
-    case B      => choice(C -> 0.6, Csharp -> 0.4)
+    case C      => choose(Csharp -> 0.3, D -> 0.6, Dsharp -> 0.1)
+    case Csharp => choose(D -> 0.4, Dsharp -> 0.6)
+    case D      => choose(Dsharp -> 0.3, E -> 0.7)
+    case Dsharp => choose(E -> 0.7, F -> 0.3)
+    case E      => choose(F -> 0.6, Fsharp -> 0.4)
+    case F      => choose(Fsharp -> 0.3, G -> 0.6, Gsharp -> 0.1)
+    case Fsharp => choose(G -> 0.4, Gsharp -> 0.6)
+    case G      => choose(Gsharp -> 0.3, A -> 0.6, Asharp -> 0.1)
+    case Gsharp => choose(A -> 0.4, Asharp -> 0.6)
+    case A      => choose(Asharp -> 0.3, B -> 0.7)
+    case Asharp => choose(B -> 0.7, C -> 0.3)
+    case B      => choose(C -> 0.6, Csharp -> 0.4)
   }
 
   // Transpose a note by 5 intervals
   def transpose5(n: Note) = n match {
-    case C      => choice(F -> 0.3, Fsharp -> 0.1, G -> 0.55, Gsharp -> 0.05)
-    case Csharp => choice(Fsharp -> 0.3, G -> 0.4, Gsharp -> 0.3)
-    case D      => choice(G -> 0.3, Gsharp -> 0.1, A -> 0.55, Asharp -> 0.05)
-    case Dsharp => choice(Gsharp -> 0.3, A -> 0.4, Asharp -> 0.3)
-    case E      => choice(A -> 0.3, Asharp -> 0.1, B -> 0.55, C -> 0.05)
-    case F      => choice(Asharp -> 0.1, B -> 0.2, C -> 0.6, Csharp -> 0.1)
-    case Fsharp => choice(B -> 0.3, C -> 0.4, Csharp -> 0.3)
-    case G      => choice(C -> 0.3, Csharp -> 0.1, D -> 0.55, Dsharp -> 0.05)
-    case Gsharp => choice(Csharp -> 0.3, D -> 0.4, Dsharp -> 0.3)
-    case A      => choice(D -> 0.3, Dsharp -> 0.1, E -> 0.55, F -> 0.05)
-    case Asharp => choice(Dsharp -> 0.3, E -> 0.3, F -> 0.4)
-    case B      => choice(E -> 0.3, F -> 0.3, Fsharp -> 0.3, G -> 0.1)
+    case C      => choose(F -> 0.3, Fsharp -> 0.1, G -> 0.55, Gsharp -> 0.05)
+    case Csharp => choose(Fsharp -> 0.3, G -> 0.4, Gsharp -> 0.3)
+    case D      => choose(G -> 0.3, Gsharp -> 0.1, A -> 0.55, Asharp -> 0.05)
+    case Dsharp => choose(Gsharp -> 0.3, A -> 0.4, Asharp -> 0.3)
+    case E      => choose(A -> 0.3, Asharp -> 0.1, B -> 0.55, C -> 0.05)
+    case F      => choose(Asharp -> 0.1, B -> 0.2, C -> 0.6, Csharp -> 0.1)
+    case Fsharp => choose(B -> 0.3, C -> 0.4, Csharp -> 0.3)
+    case G      => choose(C -> 0.3, Csharp -> 0.1, D -> 0.55, Dsharp -> 0.05)
+    case Gsharp => choose(Csharp -> 0.3, D -> 0.4, Dsharp -> 0.3)
+    case A      => choose(D -> 0.3, Dsharp -> 0.1, E -> 0.55, F -> 0.05)
+    case Asharp => choose(Dsharp -> 0.3, E -> 0.3, F -> 0.4)
+    case B      => choose(E -> 0.3, F -> 0.3, Fsharp -> 0.3, G -> 0.1)
   }
 
   val f_ide: PTransform[Note] = x => always(x)
@@ -87,12 +87,12 @@ trait MusicWarmUpModel extends StreamOddsLang with Notes {
     if (x.isEmpty) nil else {
       for (
         input <- always(x);
-        f1 <- choice(
+        f1 <- choose(
           f_ide -> 0.5,
           f_del -> 0.2,
           f_tr1 -> 0.2,
           f_tr5 -> 0.1);
-        f2 <- choice(
+        f2 <- choose(
           f_ide -> 0.5,
           f_del -> 0.2,
           f_tr1 -> 0.2,
@@ -141,13 +141,13 @@ class MusicWarmUpModelExactTest
     val r = normalize(reify(main))
     show(r, "exact main")
     r.toMap foreach {
-      case (G, p)      => p should be (0.002777777 plusOrMinus 1e-9)
-      case (Fsharp, p) => p should be (0.008333333 plusOrMinus 1e-9)
-      case (F, p)      => p should be (0.008333333 plusOrMinus 1e-9)
-      case (E, p)      => p should be (0.008333333 plusOrMinus 1e-9)
-      case (C, p)      => p should be (0.5         plusOrMinus 1e-9)
-      case (Csharp, p) => p should be (0.333333333 plusOrMinus 1e-9)
-      case (B, p)      => p should be (0.138888888 plusOrMinus 1e-9)
+      case (G, p)      => p should be (0.002777777 +- 1e-9)
+      case (Fsharp, p) => p should be (0.008333333 +- 1e-9)
+      case (F, p)      => p should be (0.008333333 +- 1e-9)
+      case (E, p)      => p should be (0.008333333 +- 1e-9)
+      case (C, p)      => p should be (0.5         +- 1e-9)
+      case (Csharp, p) => p should be (0.333333333 +- 1e-9)
+      case (B, p)      => p should be (0.138888888 +- 1e-9)
       case x => throw new Exception("unexpected note: " + x)
     }
   }

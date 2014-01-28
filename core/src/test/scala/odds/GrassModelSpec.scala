@@ -142,8 +142,8 @@ class GrassModelSpec
     show(ds(4), "rain (all IDs unique)")
     ds foreach { d =>
       d foreach {
-        case (false, p) => p should be (0.322  plusOrMinus 1e-12)
-        case (true,  p) => p should be (0.2838 plusOrMinus 1e-12)
+        case (false, p) => p should be (0.322  +- 1e-12)
+        case (true,  p) => p should be (0.2838 +- 1e-12)
       }
     }
   }
@@ -162,8 +162,8 @@ class GrassModelRejectionSamplingSpec
     val d = sample(1000)(grassModel)
     show(d, "rain (rejection sampling)")
     d foreach {
-      case (false, p) => p should be (0.322  plusOrMinus 1e-1)
-      case (true,  p) => p should be (0.2838 plusOrMinus 1e-1)
+      case (false, p) => p should be (0.322  +- 1e-1)
+      case (true,  p) => p should be (0.2838 +- 1e-1)
     }
   }
 }

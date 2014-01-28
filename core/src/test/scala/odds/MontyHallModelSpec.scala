@@ -70,8 +70,8 @@ class MontyHallModelSpec
     val d = reify(firstChoiceWins)
     show(d, "first choice wins")
     d foreach {
-      case (true, p)  => p should be (1.0 / 3.0 plusOrMinus 1e-12)
-      case (false, p) => p should be (2.0 / 3.0 plusOrMinus 1e-12)
+      case (true, p)  => p should be (1.0 / 3.0 +- 1e-12)
+      case (false, p) => p should be (2.0 / 3.0 +- 1e-12)
     }
   }
 
@@ -79,8 +79,8 @@ class MontyHallModelSpec
     val d = reify(secondChoiceWins)
     show(d, "second choice wins")
     d foreach {
-      case (true, p)  => p should be (2.0 / 3.0 plusOrMinus 1e-12)
-      case (false, p) => p should be (1.0 / 3.0 plusOrMinus 1e-12)
+      case (true, p)  => p should be (2.0 / 3.0 +- 1e-12)
+      case (false, p) => p should be (1.0 / 3.0 +- 1e-12)
     }
   }
 }
@@ -98,8 +98,8 @@ class MontyHallMonadicModelSpec
     val d = reify(firstChoiceWins)
     show(d, "first choice wins")
     d foreach {
-      case (true, p)  => p should be (1.0 / 3.0 plusOrMinus 1e-12)
-      case (false, p) => p should be (2.0 / 3.0 plusOrMinus 1e-12)
+      case (true, p)  => p should be (1.0 / 3.0 +- 1e-12)
+      case (false, p) => p should be (2.0 / 3.0 +- 1e-12)
     }
   }
 
@@ -107,8 +107,8 @@ class MontyHallMonadicModelSpec
     val d = reify(secondChoiceWins)
     show(d, "second choice wins")
     d foreach {
-      case (true, p)  => p should be (2.0 / 3.0 plusOrMinus 1e-12)
-      case (false, p) => p should be (1.0 / 3.0 plusOrMinus 1e-12)
+      case (true, p)  => p should be (2.0 / 3.0 +- 1e-12)
+      case (false, p) => p should be (1.0 / 3.0 +- 1e-12)
     }
   }
 }

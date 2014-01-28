@@ -27,7 +27,7 @@ class RejectionSamplingTest
     condCoins should have size (2)
     condCoins foreach {
       case (v, p) =>
-        p should be (0.250 plusOrMinus 0.125)
+        p should be (0.250 +- 0.125)
     }
   }
 
@@ -44,7 +44,7 @@ class RejectionSamplingTest
     splitTrials should have size (4)
     splitTrials foreach {
       case (v, p) =>
-        p should be (0.250 plusOrMinus 0.125)
+        p should be (0.250 +- 0.125)
     }
   }
 
@@ -62,7 +62,7 @@ class RejectionSamplingTest
     magicCoins should have size (2)
     magicCoins foreach {
       case (v, p) =>
-        p should be (0.500 plusOrMinus 250)
+        p should be (0.500 +- 250)
     }
   }
 }

@@ -58,7 +58,7 @@ class CoinModelTest
 
   it should "show the results of coinModel1a" in {
     val coinModel1a = reify(for {
-      coin <- choice(0 -> 0.5, 1 -> 0.5)
+      coin <- choose(0 -> 0.5, 1 -> 0.5)
     } yield {
       val sum1 = coin + coin
       val sum2 = sum1 + coin
@@ -70,7 +70,7 @@ class CoinModelTest
 
   it should "show the results of coinModel1b" in {
     val coinModel1b = reify {
-      val coin = choice(0 -> 0.5, 1 -> 0.5)
+      val coin = choose(0 -> 0.5, 1 -> 0.5)
       val sum1 = coin + coin
       val sum2 = sum1 + coin
       sum2
@@ -81,7 +81,7 @@ class CoinModelTest
 
   it should "show the results of coinModel2a" in {
     val coinModel2a = reify(for {
-      coin <- choice(0 -> 0.5, 1 -> 0.5)
+      coin <- choose(0 -> 0.5, 1 -> 0.5)
     } yield {
       val sum1 = coin + coin
       val sum2 = sum1 + coin
@@ -93,7 +93,7 @@ class CoinModelTest
 
   it should "show the results of coinModel2b" in {
     val coinModel2b = reify {
-      val coin = choice(0 -> 0.5, 1 -> 0.5)
+      val coin = choose(0 -> 0.5, 1 -> 0.5)
       val sum1 = coin + coin
       val sum2 = sum1 + coin
       (sum2 == always(3)) flatMap {

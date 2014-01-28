@@ -50,7 +50,7 @@ trait MusicModel extends ListOddsLang with Notes {
 
   def transpose(probs: List[Double], n: Int): Note => Rand[Note] = {
     val arr = for (i <- 0 to 11) yield (octave.drop(n+i).zip(probs))
-    (x: Note) => choice(arr(note_to_int(x)) : _*)
+    (x: Note) => choose(arr(note_to_int(x)) : _*)
   }
 
   // pre-compute the transformations
@@ -75,7 +75,7 @@ trait MusicModel extends ListOddsLang with Notes {
   val id: PTransform[Note] = x => always(x)
   val delete: PTransform[Note] = x => nil
   def choose_op() =
-    choice(
+    choose(
       id -> 0.4,
       delete -> 0.2,
       maptranspose2 -> 0.1,
