@@ -52,6 +52,12 @@ trait RandOps { this: OddsIntf =>
     choose(true -> p, false -> (1-p))
   @inline def flip(rp: Rand[Double]): Rand[Rand[Boolean]] = fmap(rp)(flip _)
 
+  private val randomGenerator = new java.util.Random
+
+  def uniform(lower: Double = 0.0, upper: Double = 1.0): Rand[Double] = always(lower + (upper - lower) * randomGenerator.nextDouble)
+
+  def normal: Rand[Double] = always(randomGenerator.nextGaussian)
+
   def uniform[A](xs: A*): Rand[A] = if (xs.isEmpty) never else {
     val p = 1.0 / xs.length
     choose(xs.map((_, p)): _*)
